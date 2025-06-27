@@ -9,14 +9,17 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.81.5",
     "@wagmi/connectors": "^5.8.5",
     "dotenv": "^17.0.0",
     "next": "15.3.4",
     "nft.storage": "^7.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "twitter-api-v2": "^1.24.0",
     "viem": "^2.31.4",
-    "wagmi": "^2.15.6"
+    "wagmi": "^2.15.6",
+    "web3.storage": "^4.5.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
