@@ -146,7 +146,7 @@ export async function GET(request: NextRequest) {
       username: user.data.username,
       name: user.data.name,
       bio: user.data.description,
-      profileImage: user.data.profile_image_url,
+      profileImage: user.data.profile_image_url?.replace('_normal', '') || '',
     };
 
     // Redirect back to main page with success and user data

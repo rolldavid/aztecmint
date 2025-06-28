@@ -134,9 +134,13 @@ export default function Home() {
     functionName: 'tokenCounter',
   });
 
+  console.log('Token counter:', tokenCounter);
+
   // Fetch individual NFT data
   const fetchNFT = useCallback(async (tokenId: number): Promise<NFT | null> => {
     try {
+      console.log(`Fetching NFT ${tokenId}...`);
+      
       // Get owner
       const ownerResponse = await fetch(`/api/contract-read`, {
         method: 'POST',
@@ -148,9 +152,14 @@ export default function Home() {
           args: [tokenId],
         }),
       });
-      if (!ownerResponse.ok) return null;
+      if (!ownerResponse.ok) {
+        console.error(`Failed to get owner for token ${tokenId}:`, await ownerResponse.text());
+        return null;
+      }
       const ownerData = await ownerResponse.json();
       const owner = ownerData.data;
+      console.log(`Token ${tokenId} owner:`, owner);
+      
       // Get token URI
       const tokenURIResponse = await fetch(`/api/contract-read`, {
         method: 'POST',
@@ -162,9 +171,14 @@ export default function Home() {
           args: [tokenId],
         }),
       });
-      if (!tokenURIResponse.ok) return null;
+      if (!tokenURIResponse.ok) {
+        console.error(`Failed to get token URI for token ${tokenId}:`, await tokenURIResponse.text());
+        return null;
+      }
       const tokenURIData = await tokenURIResponse.json();
       const tokenURI = tokenURIData.data;
+      console.log(`Token ${tokenId} URI:`, tokenURI);
+      
       // Fetch metadata
       let metadata;
       if (tokenURI) {
@@ -172,22 +186,35 @@ export default function Home() {
           const metadataResponse = await fetch(tokenURI);
           if (metadataResponse.ok) {
             metadata = await metadataResponse.json();
+            console.log(`Token ${tokenId} metadata:`, metadata);
+          } else {
+            console.error(`Failed to fetch metadata for token ${tokenId}:`, metadataResponse.status);
           }
-        } catch {}
+        } catch (err) {
+          console.error(`Error fetching metadata for token ${tokenId}:`, err);
+        }
       }
-      return {
+      
+      const nft = {
         tokenId,
         owner: owner || 'Unknown',
         metadata,
       };
-    } catch {
+      console.log(`Successfully fetched NFT ${tokenId}:`, nft);
+      return nft;
+    } catch (err) {
+      console.error(`Error fetching NFT ${tokenId}:`, err);
       return null;
     }
   }, []);
 
   // Fetch all NFTs
   const fetchAllNFTs = useCallback(async () => {
-    if (!tokenCounter) return;
+    if (!tokenCounter) {
+      console.log('No token counter available, skipping NFT fetch');
+      return;
+    }
+    console.log('Starting to fetch all NFTs, total tokens:', tokenCounter);
     setLoading(true);
     const totalTokens = Number(tokenCounter);
     const nftPromises = [];
@@ -196,7 +223,9 @@ export default function Home() {
     }
     try {
       const nftResults = await Promise.all(nftPromises);
+      console.log('All NFT fetch results:', nftResults);
       const validNFTs = nftResults.filter(nft => nft !== null) as NFT[];
+      console.log('Valid NFTs:', validNFTs);
       setNfts(validNFTs);
     } catch (err) {
       console.error('Error fetching NFTs:', err);
@@ -215,8 +244,13 @@ export default function Home() {
   // Split NFTs into owned and others
   const ownedNFTs = useMemo(() => {
     if (!address) return [];
-    return nfts.filter(nft => nft.owner.toLowerCase() === address.toLowerCase());
+    const owned = nfts.filter(nft => nft.owner.toLowerCase() === address.toLowerCase());
+    console.log('Owned NFTs:', owned);
+    return owned;
   }, [nfts, address]);
+
+  console.log('Current NFTs state:', nfts);
+  console.log('Current address:', address);
 
   // Handle Twitter disconnect
   const handleTwitterDisconnect = () => {
@@ -285,8 +319,28 @@ export default function Home() {
     setTwitterLoading(true);
     setError(null);
 
+    // Development mode - bypass OAuth and ask for username
+    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+      const username = prompt('Enter a Twitter username to simulate (e.g., "DavidSteinrueck"):');
+      if (username) {
+        // Simulate Twitter user data
+        const mockUserData = {
+          id: "123456789",
+          username: username,
+          name: username.charAt(0).toUpperCase() + username.slice(1),
+          bio: `This is a simulated profile for @${username} in development mode.`,
+          profileImage: "https://pbs.twimg.com/profile_images/1907046935607013376/2rzn07BJ.jpg",
+        };
+        
+        localStorage.setItem('twitterUser', JSON.stringify(mockUserData));
+        setTwitterUser(mockUserData);
+      }
+      setTwitterLoading(false);
+      return;
+    }
+
     try {
-      // Get auth URL from our API
+      // Production mode - use real OAuth
       const authResponse = await fetch('/api/twitter/auth');
       const authData = await authResponse.json();
 
@@ -349,23 +403,48 @@ export default function Home() {
                    borderColor: '#D4FF28',
                    boxShadow: '0 10px 30px rgba(212, 255, 40, 0.2)'
                  }}>
-              <div className="text-center mb-6">
-                <div className="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4" 
-                     style={{ borderColor: '#2BFAE9' }}>
-                  <Image 
-                    src={twitterUser.profileImage} 
-                    alt={twitterUser.name}
-                    width={96}
-                    height={96}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <h2 className="text-2xl font-bold mb-2" style={{ color: '#F2EEE1' }}>
-                  Welcome, {twitterUser.name}!
+              
+              {/* Card Game Style UI */}
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold mb-6 text-center" style={{ color: '#F2EEE1' }}>
+                  Your Profile Card
                 </h2>
-                <p className="text-sm" style={{ color: '#2BFAE9' }}>
-                  @{twitterUser.username}
-                </p>
+                
+                {/* Card Container */}
+                <div className="relative mx-auto w-80 h-96 rounded-2xl overflow-hidden shadow-2xl transform transition-all duration-300 hover:scale-105"
+                     style={{ 
+                       background: 'linear-gradient(135deg, #D4FF28 0%, #2BFAE9 50%, #FF2DF4 100%)',
+                       border: '4px solid #F2EEE1'
+                     }}>
+                  
+                  {/* Profile Image - Top 3/4 of card */}
+                  <div className="w-full h-72 relative overflow-hidden">
+                    <Image 
+                      src={twitterUser.profileImage} 
+                      alt={twitterUser.name}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  
+                  {/* User Info - Bottom 1/4 of card */}
+                  <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end px-4 pb-2">
+                    <h3 className="text-lg font-bold mb-1" style={{ color: '#F2EEE1' }}>
+                      {twitterUser.name}
+                    </h3>
+                    <p className="text-sm font-medium" style={{ color: '#2BFAE9' }}>
+                      @{twitterUser.username}
+                    </p>
+                  </div>
+                  
+                  {/* Card Corner Decorations */}
+                  <div className="absolute top-2 left-2 text-xs font-bold" style={{ color: '#F2EEE1' }}>
+                    {twitterUser.username.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="absolute top-2 right-2 text-xs font-bold" style={{ color: '#F2EEE1' }}>
+                    {twitterUser.username.charAt(0).toUpperCase()}
+                  </div>
+                </div>
               </div>
               
               {/* Mint Profile as NFT Button */}
@@ -380,7 +459,7 @@ export default function Home() {
                   color: '#1A1400'
                 }}
               >
-                {isPending ? "Minting..." : "Mint Profile as NFT"}
+                {isPending ? "Minting..." : "Mint Profile Card as NFT"}
               </button>
               
               {txHash && (
