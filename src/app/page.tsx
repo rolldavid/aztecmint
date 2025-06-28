@@ -34,6 +34,7 @@ export default function Home() {
   const [twitterUser, setTwitterUser] = useState<TwitterUser | null>(null);
   const [twitterLoading, setTwitterLoading] = useState(false);
   const boundingRef = useRef<DOMRect | null>(null);
+  const [nftMinted, setNftMinted] = useState(false);
 
   // Check for Twitter callback on page load
   useEffect(() => {
@@ -257,6 +258,15 @@ export default function Home() {
   const handleTwitterDisconnect = () => {
     setTwitterUser(null);
     localStorage.removeItem('twitterUser');
+    setNftMinted(false);
+  };
+
+  // Share on X functionality
+  const handleShareOnX = () => {
+    const text = "I joined the Aztec Guild! 🪿✨";
+    const url = `https://sepolia.etherscan.io/tx/${txHash}`; // Link to the transaction
+    const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+    window.open(shareUrl, '_blank');
   };
 
   // Card tilt effect handlers
@@ -286,7 +296,26 @@ export default function Home() {
 
   // Handle minting Twitter profile as NFT
   const handleMint = async () => {
-    if (!twitterUser || !address) return;
+    if (!twitterUser) return;
+    
+    // Check if wallet is connected
+    if (!isConnected) {
+      setError('Please connect your MetaMask wallet to mint your guild card');
+      // Try to connect wallet automatically
+      try {
+        await connect({ connector: connectors[0] });
+      } catch (err) {
+        console.error('Failed to connect wallet:', err);
+        setError('Failed to connect wallet. Please connect manually and try again.');
+      }
+      return;
+    }
+    
+    if (!address) {
+      setError('Wallet address not found. Please reconnect your wallet.');
+      return;
+    }
+    
     setError(null);
     try {
       // 1. Use Twitter profile image directly
@@ -295,8 +324,8 @@ export default function Home() {
       // 2. Create metadata and upload to IPFS
       const firstName = twitterUser.name?.split(' ')[0] || 'Anonymous';
       const metadata = {
-        name: `${firstName}'s Profile Card`,
-        description: `A personalized NFT card for ${twitterUser.name} (@${twitterUser.username}). ${twitterUser.bio || ''}`,
+        name: `${firstName}'s Guild Card`,
+        description: `A personalized guild member card for ${twitterUser.name} (@${twitterUser.username}). ${twitterUser.bio || ''}`,
         image: imageUrl,
         attributes: [
           {
@@ -323,6 +352,14 @@ export default function Home() {
       setError(err instanceof Error ? err.message : "Minting failed");
     }
   };
+
+  // Watch for successful minting
+  useEffect(() => {
+    if (txHash) {
+      setNftMinted(true);
+      setError(null);
+    }
+  }, [txHash]);
 
   // Upload metadata to IPFS using our API route
   const uploadMetadataToIPFS = async (metadata: Record<string, unknown>) => {
@@ -487,17 +524,19 @@ export default function Home() {
               
               {/* Mint Profile as NFT Button */}
               <button
-                onClick={handleMint}
+                onClick={nftMinted ? handleShareOnX : handleMint}
                 disabled={isPending}
                 className="w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
                 style={{ 
                   background: isPending 
                     ? 'linear-gradient(135deg, #FF1A1A 0%, #FF2DF4 100%)'
+                    : nftMinted
+                    ? 'linear-gradient(135deg, #1DA1F2 0%, #0D8BD9 100%)'
                     : 'linear-gradient(135deg, #D4FF28 0%, #2BFAE9 100%)',
                   color: '#1A1400'
                 }}
               >
-                {isPending ? "Minting..." : "Mint Guild Card as NFT"}
+                {isPending ? "Minting..." : nftMinted ? "Share on X" : !isConnected ? "Connect Wallet to Mint" : "Mint Guild Card as NFT"}
               </button>
               
               {txHash && (
