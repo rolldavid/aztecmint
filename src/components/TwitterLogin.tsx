@@ -10,10 +10,10 @@ interface TwitterUser {
 }
 
 interface TwitterLoginProps {
-  onUserData: (user: TwitterUser) => void;
+  // Removed unused onUserData prop
 }
 
-export default function TwitterLogin({ onUserData }: TwitterLoginProps) {
+export default function TwitterLogin({}: TwitterLoginProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

@@ -1,4 +1,5 @@
 'use client'
+import Image from 'next/image';
 
 interface TwitterUser {
   id: string;
@@ -25,9 +26,11 @@ export default function TwitterGreeting({ user, onDisconnect }: TwitterGreetingP
         <div className="flex items-center space-x-3">
           <div className="w-12 h-12 rounded-full border-2 overflow-hidden" 
                style={{ borderColor: '#1DA1F2' }}>
-            <img 
+            <Image 
               src={user.profileImage} 
               alt={user.name}
+              width={48}
+              height={48}
               className="w-full h-full object-cover"
             />
           </div>

@@ -26,8 +26,8 @@ export async function POST(req: NextRequest) {
     headers: {
       "pinata_api_key": PINATA_API_KEY,
       "pinata_secret_api_key": PINATA_SECRET_KEY,
-    } as any,
-    body: pinataForm as any,
+    } as Record<string, string>,
+    body: pinataForm as FormData,
   });
 
   if (!response.ok) {

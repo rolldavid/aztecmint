@@ -10,12 +10,11 @@ interface TwitterUser {
 }
 
 interface TwitterConnectProps {
-  onUserData: (user: TwitterUser) => void;
   onLogin: () => Promise<void>;
   isLoading?: boolean;
 }
 
-export default function TwitterConnect({ onUserData, onLogin, isLoading = false }: TwitterConnectProps) {
+export default function TwitterConnect({ onLogin, isLoading = false }: TwitterConnectProps) {
   const [error, setError] = useState<string | null>(null);
 
   const handleTwitterLogin = async () => {

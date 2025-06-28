@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server";
 import { createPublicClient, http } from "viem";
 import { sepolia } from "viem/chains";
 

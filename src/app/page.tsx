@@ -332,7 +332,7 @@ export default function Home() {
               <p className="text-center mb-6" style={{ color: '#2BFAE9' }}>
                 Connect your Twitter account to personalize your experience
               </p>
-              <TwitterConnect onUserData={handleTwitterUserData} onLogin={handleTwitterLogin} isLoading={twitterLoading} />
+              <TwitterConnect onLogin={handleTwitterLogin} isLoading={twitterLoading} />
             </div>
           )}
         </div>

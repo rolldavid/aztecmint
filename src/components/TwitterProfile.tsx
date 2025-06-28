@@ -1,4 +1,5 @@
 'use client'
+import Image from 'next/image';
 
 interface TwitterUser {
   id: string;
@@ -35,12 +36,16 @@ export default function TwitterProfile({ user, onDisconnect }: TwitterProfilePro
       </div>
       
       <div className="flex items-start space-x-4">
-        <img 
-          src={user.profileImage} 
-          alt={user.name}
-          className="w-16 h-16 rounded-full border-2"
-          style={{ borderColor: '#1DA1F2' }}
-        />
+        <div className="w-16 h-16 rounded-full border-2 overflow-hidden" 
+             style={{ borderColor: '#1DA1F2' }}>
+          <Image 
+            src={user.profileImage} 
+            alt={user.name}
+            width={64}
+            height={64}
+            className="w-full h-full object-cover"
+          />
+        </div>
         
         <div className="flex-1">
           <div className="flex items-center space-x-2 mb-2">

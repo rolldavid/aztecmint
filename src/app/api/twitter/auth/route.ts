@@ -16,7 +16,7 @@ function generatePKCE() {
   return { codeVerifier, codeChallenge };
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     if (!TWITTER_CLIENT_ID || !TWITTER_CLIENT_SECRET) {
       return new Response(JSON.stringify({ error: "Twitter credentials not configured" }), { status: 500 });
