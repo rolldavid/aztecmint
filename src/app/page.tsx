@@ -1,10 +1,10 @@
 'use client'
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useAccount, useConnect, useDisconnect, useWriteContract, useReadContract } from "wagmi";
-import { injected } from "wagmi/connectors";
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from "../contracts/config";
 import TwitterConnect from "../components/TwitterConnect";
 import TwitterGreeting from "../components/TwitterGreeting";
+import Image from "next/image";
 
 interface NFT {
   tokenId: number;
@@ -100,28 +100,8 @@ export default function Home() {
     functionName: 'tokenCounter',
   });
 
-  // Fetch all NFTs
-  const fetchAllNFTs = async () => {
-    if (!tokenCounter) return;
-    setLoading(true);
-    const totalTokens = Number(tokenCounter);
-    const nftPromises = [];
-    for (let i = 0; i < totalTokens; i++) {
-      nftPromises.push(fetchNFT(i));
-    }
-    try {
-      const nftResults = await Promise.all(nftPromises);
-      const validNFTs = nftResults.filter(nft => nft !== null) as NFT[];
-      setNfts(validNFTs);
-    } catch (err) {
-      console.error('Error fetching NFTs:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Fetch individual NFT data
-  const fetchNFT = async (tokenId: number): Promise<NFT | null> => {
+  const fetchNFT = useCallback(async (tokenId: number): Promise<NFT | null> => {
     try {
       // Get owner
       const ownerResponse = await fetch(`/api/contract-read`, {
@@ -169,25 +149,40 @@ export default function Home() {
     } catch {
       return null;
     }
-  };
+  }, []);
+
+  // Fetch all NFTs
+  const fetchAllNFTs = useCallback(async () => {
+    if (!tokenCounter) return;
+    setLoading(true);
+    const totalTokens = Number(tokenCounter);
+    const nftPromises = [];
+    for (let i = 0; i < totalTokens; i++) {
+      nftPromises.push(fetchNFT(i));
+    }
+    try {
+      const nftResults = await Promise.all(nftPromises);
+      const validNFTs = nftResults.filter(nft => nft !== null) as NFT[];
+      setNfts(validNFTs);
+    } catch (err) {
+      console.error('Error fetching NFTs:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [tokenCounter, fetchNFT]);
 
   // Load NFTs when token counter changes
   useEffect(() => {
     if (tokenCounter && Number(tokenCounter) > 0) {
       fetchAllNFTs();
     }
-  }, [tokenCounter]);
+  }, [tokenCounter, fetchAllNFTs]);
 
   // Split NFTs into owned and others
   const ownedNFTs = useMemo(() => {
     if (!address) return [];
     return nfts.filter(nft => nft.owner.toLowerCase() === address.toLowerCase());
   }, [nfts, address]);
-
-  // Handle Twitter user data
-  const handleTwitterUserData = (user: TwitterUser) => {
-    setTwitterUser(user);
-  };
 
   // Handle Twitter disconnect
   const handleTwitterDisconnect = () => {
@@ -212,7 +207,7 @@ export default function Home() {
   };
 
   // Upload metadata to IPFS using our API route
-  const uploadMetadataToIPFS = async (metadata: any) => {
+  const uploadMetadataToIPFS = async (metadata: Record<string, unknown>) => {
     const response = await fetch('/api/upload-metadata', {
       method: 'POST',
       headers: {
@@ -251,8 +246,8 @@ export default function Home() {
         functionName: 'mintNFT',
         args: [address, metadataUrl],
       });
-    } catch (err: any) {
-      setError(err.message || "Minting failed");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Minting failed");
     }
   };
 
@@ -410,11 +405,14 @@ export default function Home() {
                      style={{ backgroundColor: '#001F18' }}>
                   <div className="absolute inset-0 bg-gradient-to-br from-[#D4FF28]/20 to-[#2BFAE9]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   {nft.metadata?.image && (
-                    <img 
-                      src={nft.metadata.image} 
-                      alt={nft.metadata.name}
-                      className="w-full h-64 object-cover"
-                    />
+                    <div className="w-full h-64 relative overflow-hidden">
+                      <Image 
+                        src={nft.metadata.image} 
+                        alt={nft.metadata.name}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
                   )}
                   <div className="p-6">
                     <h3 className="font-bold text-xl mb-3" style={{ color: '#F2EEE1' }}>
@@ -465,11 +463,14 @@ export default function Home() {
                      style={{ backgroundColor: '#001F18' }}>
                   <div className="absolute inset-0 bg-gradient-to-br from-[#FF2DF4]/10 to-[#2BFAE9]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   {nft.metadata?.image && (
-                    <img 
-                      src={nft.metadata.image} 
-                      alt={nft.metadata.name}
-                      className="w-full h-48 object-cover"
-                    />
+                    <div className="w-full h-48 relative overflow-hidden">
+                      <Image 
+                        src={nft.metadata.image} 
+                        alt={nft.metadata.name}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
                   )}
                   <div className="p-4">
                     <h3 className="font-bold text-lg mb-2" style={{ color: '#F2EEE1' }}>

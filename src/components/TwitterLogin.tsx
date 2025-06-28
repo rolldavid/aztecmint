@@ -1,19 +1,7 @@
 'use client'
 import { useState } from 'react';
 
-interface TwitterUser {
-  id: string;
-  username: string;
-  name: string;
-  bio: string;
-  profileImage: string;
-}
-
-interface TwitterLoginProps {
-  // Removed unused onUserData prop
-}
-
-export default function TwitterLogin({}: TwitterLoginProps) {
+export default function TwitterLogin() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

@@ -1,14 +1,6 @@
 'use client'
 import { useState } from 'react';
 
-interface TwitterUser {
-  id: string;
-  username: string;
-  name: string;
-  bio: string;
-  profileImage: string;
-}
-
 interface TwitterConnectProps {
   onLogin: () => Promise<void>;
   isLoading?: boolean;
