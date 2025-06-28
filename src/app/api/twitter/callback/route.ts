@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 // Twitter OAuth 2.0 configuration
 const TWITTER_CLIENT_ID = process.env.TWITTER_CLIENT_ID!;
 const TWITTER_CLIENT_SECRET = process.env.TWITTER_CLIENT_SECRET!;
-const REDIRECT_URI = process.env.NEXTAUTH_URL + "/api/twitter/callback";
+const REDIRECT_URI = (process.env.NEXTAUTH_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000') + "/api/twitter/callback";
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,11 +16,33 @@ export async function GET(request: NextRequest) {
     const error = searchParams.get("error");
 
     if (error) {
-      return new Response(JSON.stringify({ error: "Twitter authorization denied" }), { status: 400 });
+      // Redirect back to main page with error
+      const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+      return new Response(null, {
+        status: 302,
+        headers: {
+          'Location': `${baseUrl}?twitter_error=authorization_denied`,
+          'Set-Cookie': [
+            "twitter_oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0",
+            "twitter_code_verifier=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0"
+          ].join(', ')
+        }
+      });
     }
 
     if (!code || !state) {
-      return new Response(JSON.stringify({ error: "Missing authorization code or state" }), { status: 400 });
+      // Redirect back to main page with error
+      const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+      return new Response(null, {
+        status: 302,
+        headers: {
+          'Location': `${baseUrl}?twitter_error=missing_params`,
+          'Set-Cookie': [
+            "twitter_oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0",
+            "twitter_code_verifier=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0"
+          ].join(', ')
+        }
+      });
     }
 
     // Verify state and get code verifier from cookies
@@ -32,11 +54,33 @@ export async function GET(request: NextRequest) {
     const codeVerifier = codeVerifierCookie?.split("=")[1];
 
     if (state !== storedState) {
-      return new Response(JSON.stringify({ error: "Invalid state parameter" }), { status: 400 });
+      // Redirect back to main page with error
+      const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+      return new Response(null, {
+        status: 302,
+        headers: {
+          'Location': `${baseUrl}?twitter_error=invalid_state`,
+          'Set-Cookie': [
+            "twitter_oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0",
+            "twitter_code_verifier=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0"
+          ].join(', ')
+        }
+      });
     }
 
     if (!codeVerifier) {
-      return new Response(JSON.stringify({ error: "Missing code verifier" }), { status: 400 });
+      // Redirect back to main page with error
+      const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+      return new Response(null, {
+        status: 302,
+        headers: {
+          'Location': `${baseUrl}?twitter_error=missing_verifier`,
+          'Set-Cookie': [
+            "twitter_oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0",
+            "twitter_code_verifier=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0"
+          ].join(', ')
+        }
+      });
     }
 
     // Create Twitter client
@@ -61,7 +105,18 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user.data) {
-      return new Response(JSON.stringify({ error: "Failed to fetch user data" }), { status: 500 });
+      // Redirect back to main page with error
+      const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+      return new Response(null, {
+        status: 302,
+        headers: {
+          'Location': `${baseUrl}?twitter_error=fetch_failed`,
+          'Set-Cookie': [
+            "twitter_oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0",
+            "twitter_code_verifier=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0"
+          ].join(', ')
+        }
+      });
     }
 
     const userData = {
@@ -70,26 +125,37 @@ export async function GET(request: NextRequest) {
       name: user.data.name,
       bio: user.data.description,
       profileImage: user.data.profile_image_url,
-      accessToken,
-      refreshToken,
-      expiresIn,
     };
 
-    // Store user data in session/cookie (you might want to use a proper session management solution)
-    const response = new Response(JSON.stringify({ 
-      success: true, 
-      user: userData 
-    }), { status: 200 });
+    // Redirect back to main page with success and user data
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+    const redirectUrl = new URL(baseUrl);
+    redirectUrl.searchParams.set('twitter_success', 'true');
+    redirectUrl.searchParams.set('twitter_user', JSON.stringify(userData));
     
-    // Clear the OAuth cookies
-    response.headers.set("Set-Cookie", [
-      "twitter_oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0",
-      "twitter_code_verifier=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0"
-    ].join(', '));
-    
-    return response;
+    return new Response(null, {
+      status: 302,
+      headers: {
+        'Location': redirectUrl.toString(),
+        'Set-Cookie': [
+          "twitter_oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0",
+          "twitter_code_verifier=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0"
+        ].join(', ')
+      }
+    });
   } catch (error) {
     console.error("Twitter callback error:", error);
-    return new Response(JSON.stringify({ error: "Failed to complete Twitter authentication" }), { status: 500 });
+    // Redirect back to main page with error
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+    return new Response(null, {
+      status: 302,
+      headers: {
+        'Location': `${baseUrl}?twitter_error=authentication_failed`,
+        'Set-Cookie': [
+          "twitter_oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0",
+          "twitter_code_verifier=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0"
+        ].join(', ')
+      }
+    });
   }
 } 

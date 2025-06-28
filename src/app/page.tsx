@@ -43,9 +43,40 @@ export default function Home() {
     const code = urlParams.get('code');
     const state = urlParams.get('state');
     const error = urlParams.get('error');
+    const twitterSuccess = urlParams.get('twitter_success');
+    const twitterUser = urlParams.get('twitter_user');
+    const twitterError = urlParams.get('twitter_error');
+    
+    if (twitterError) {
+      console.error('Twitter auth error:', twitterError);
+      setError(`Twitter authentication failed: ${twitterError}`);
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return;
+    }
+    
+    if (twitterSuccess && twitterUser) {
+      try {
+        const userData = JSON.parse(twitterUser);
+        // Store Twitter data in localStorage
+        localStorage.setItem('twitterUser', JSON.stringify(userData));
+        setTwitterUser(userData);
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } catch (err) {
+        console.error('Failed to parse Twitter user data:', err);
+        setError('Failed to process Twitter user data');
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+      return;
+    }
     
     if (error) {
       console.error('Twitter auth error:', error);
+      setError('Twitter authorization was denied');
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
       return;
     }
     
@@ -71,9 +102,15 @@ export default function Home() {
             window.history.replaceState({}, document.title, window.location.pathname);
           } else {
             console.error('Twitter callback failed:', data.error);
+            setError(data.error || 'Twitter authentication failed');
+            // Clean up URL
+            window.history.replaceState({}, document.title, window.location.pathname);
           }
         } catch (err) {
           console.error('Failed to handle Twitter callback:', err);
+          setError('Failed to complete Twitter authentication');
+          // Clean up URL
+          window.history.replaceState({}, document.title, window.location.pathname);
         }
       };
       
