@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Exchange code for access token using PKCE
-    const { accessToken, refreshToken, expiresIn } = await client.loginWithOAuth2({
+    const { accessToken } = await client.loginWithOAuth2({
       code,
       codeVerifier,
       redirectUri: REDIRECT_URI,
