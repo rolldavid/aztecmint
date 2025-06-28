@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server";
 import { TwitterApi } from "twitter-api-v2";
 import crypto from "crypto";
 

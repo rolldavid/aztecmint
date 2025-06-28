@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
         "Content-Type": "application/json",
         "pinata_api_key": PINATA_API_KEY,
         "pinata_secret_api_key": PINATA_SECRET_KEY,
-      } as any,
+      } as Record<string, string>,
       body: JSON.stringify(metadata),
     });
 
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
 
     const result = await response.json();
     return new Response(JSON.stringify(result), { status: 200 });
-  } catch (error) {
+  } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON data" }), { status: 400 });
   }
 } 
