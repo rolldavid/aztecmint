@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useAccount, useConnect, useDisconnect, useWriteContract, useReadContract } from "wagmi";
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from "../contracts/config";
 import Image from "next/image";
@@ -33,6 +33,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [twitterUser, setTwitterUser] = useState<TwitterUser | null>(null);
   const [twitterLoading, setTwitterLoading] = useState(false);
+  const boundingRef = useRef<DOMRect | null>(null);
 
   // Check for Twitter callback on page load
   useEffect(() => {
@@ -258,6 +259,31 @@ export default function Home() {
     localStorage.removeItem('twitterUser');
   };
 
+  // Card tilt effect handlers
+  const handleMouseEnter = (ev: React.MouseEvent<HTMLDivElement>) => {
+    boundingRef.current = ev.currentTarget.getBoundingClientRect();
+  };
+
+  const handleMouseLeave = () => {
+    boundingRef.current = null;
+  };
+
+  const handleMouseMove = (ev: React.MouseEvent<HTMLDivElement>) => {
+    if (!boundingRef.current) return;
+    
+    const x = ev.clientX - boundingRef.current.left;
+    const y = ev.clientY - boundingRef.current.top;
+    const xPercentage = x / boundingRef.current.width;
+    const yPercentage = y / boundingRef.current.height;
+    const xRotation = (xPercentage - 0.5) * 20;
+    const yRotation = (0.5 - yPercentage) * 20;
+
+    ev.currentTarget.style.setProperty("--x-rotation", `${yRotation}deg`);
+    ev.currentTarget.style.setProperty("--y-rotation", `${xRotation}deg`);
+    ev.currentTarget.style.setProperty("--x", `${xPercentage * 100}%`);
+    ev.currentTarget.style.setProperty("--y", `${yPercentage * 100}%`);
+  };
+
   // Handle minting Twitter profile as NFT
   const handleMint = async () => {
     if (!twitterUser || !address) return;
@@ -407,15 +433,27 @@ export default function Home() {
               {/* Card Game Style UI */}
               <div className="mb-8">
                 <h2 className="text-2xl font-bold mb-6 text-center" style={{ color: '#F2EEE1' }}>
-                  Your Profile Card
+                 Guild Member Card
                 </h2>
                 
                 {/* Card Container */}
-                <div className="relative mx-auto w-80 h-96 rounded-2xl overflow-hidden shadow-2xl transform transition-all duration-300 hover:scale-105"
-                     style={{ 
-                       background: 'linear-gradient(135deg, #D4FF28 0%, #2BFAE9 50%, #FF2DF4 100%)',
-                       border: '4px solid #F2EEE1'
-                     }}>
+                <div 
+                  className="group relative mx-auto w-80 h-96 rounded-2xl overflow-hidden shadow-2xl transition-transform ease-out hover:[transform:rotateX(var(--x-rotation))_rotateY(var(--y-rotation))_scale(1.1)]"
+                  style={{ 
+                    background: 'linear-gradient(135deg, #D4FF28 0%, #2BFAE9 50%, #FF2DF4 100%)',
+                    border: '4px solid #F2EEE1',
+                    transformStyle: 'preserve-3d',
+                    perspective: '800px'
+                  }}
+                  onMouseMove={handleMouseMove}
+                  onMouseEnter={handleMouseEnter}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  
+                  {/* Glare Effect */}
+                  <div 
+                    className="pointer-events-none absolute inset-0 group-hover:bg-[radial-gradient(at_var(--x)_var(--y),rgba(255,255,255,0.3)_20%,transparent_80%)]"
+                  />
                   
                   {/* Profile Image - Top 3/4 of card */}
                   <div className="w-full h-72 relative overflow-hidden">
@@ -459,7 +497,7 @@ export default function Home() {
                   color: '#1A1400'
                 }}
               >
-                {isPending ? "Minting..." : "Mint Profile Card as NFT"}
+                {isPending ? "Minting..." : "Mint Guild Card as NFT"}
               </button>
               
               {txHash && (
@@ -485,9 +523,9 @@ export default function Home() {
               <button
                 onClick={handleTwitterDisconnect}
                 className="w-full mt-4 py-2 rounded-xl font-medium transition-all duration-300 hover:scale-105"
-                style={{ backgroundColor: '#FF1A1A', color: '#F2EEE1' }}
+                style={{ border: '2px solid #FF1A1A', color: '#F2EEE1' }}
               >
-                Disconnect Twitter
+                Connect a Different Account
               </button>
             </div>
           ) : (
@@ -498,10 +536,10 @@ export default function Home() {
                    boxShadow: '0 10px 30px rgba(255, 45, 244, 0.2)'
                  }}>
               <h2 className="text-2xl font-bold mb-6 text-center" style={{ color: '#F2EEE1' }}>
-                Create Your Card
+                Join the Aztec Guild
               </h2>
               <p className="text-center mb-6" style={{ color: '#2BFAE9' }}>
-                Connect your Twitter to create a personalized NFT card
+                Connect your X to create a personalized guild member card
               </p>
               <button
                 onClick={handleTwitterLogin}
@@ -514,7 +552,7 @@ export default function Home() {
                   color: '#1A1400'
                 }}
               >
-                {twitterLoading ? "Connecting..." : "Create Card"}
+                {twitterLoading ? "Connecting..." : "Generate Member Card"}
               </button>
             </div>
           )}
@@ -570,7 +608,7 @@ export default function Home() {
         <div className="mb-8">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl font-bold" style={{ color: '#F2EEE1' }}>
-              All NFTs in Collection
+              All Guild Members
             </h2>
             <div className="px-4 py-2 rounded-full text-sm font-medium" 
                  style={{ backgroundColor: '#00122E', color: '#2BFAE9' }}>
