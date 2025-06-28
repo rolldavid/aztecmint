@@ -30,7 +30,6 @@ export default function Home() {
   const { disconnect } = useDisconnect();
   const { writeContract, isPending, data: txHash } = useWriteContract();
 
-  const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [nfts, setNfts] = useState<NFT[]>([]);
   const [loading, setLoading] = useState(false);
@@ -227,20 +226,44 @@ export default function Home() {
     localStorage.removeItem('twitterUser');
   };
 
-  // Upload file to IPFS using our API route
-  const uploadToIPFS = async (file: File) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    const response = await fetch('/api/upload', {
-      method: 'POST',
-      body: formData,
-    });
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to upload to IPFS');
+  // Handle minting Twitter profile as NFT
+  const handleMint = async () => {
+    if (!twitterUser || !address) return;
+    setError(null);
+    try {
+      // 1. Use Twitter profile image directly
+      const imageUrl = twitterUser.profileImage;
+      
+      // 2. Create metadata and upload to IPFS
+      const firstName = twitterUser.name?.split(' ')[0] || 'Anonymous';
+      const metadata = {
+        name: `${firstName}'s Profile Card`,
+        description: `A personalized NFT card for ${twitterUser.name} (@${twitterUser.username}). ${twitterUser.bio || ''}`,
+        image: imageUrl,
+        attributes: [
+          {
+            trait_type: "Twitter Username",
+            value: twitterUser.username
+          },
+          {
+            trait_type: "Twitter Bio",
+            value: twitterUser.bio || "No bio"
+          }
+        ]
+      };
+      const metadataCid = await uploadMetadataToIPFS(metadata);
+      const metadataUrl = `https://gateway.pinata.cloud/ipfs/${metadataCid}`;
+      
+      // 3. Mint NFT with wagmi
+      writeContract({
+        address: CONTRACT_ADDRESS,
+        abi: CONTRACT_ABI,
+        functionName: 'mintNFT',
+        args: [address, metadataUrl],
+      });
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Minting failed");
     }
-    const data = await response.json();
-    return data.IpfsHash;
   };
 
   // Upload metadata to IPFS using our API route
@@ -258,34 +281,6 @@ export default function Home() {
     }
     const data = await response.json();
     return data.IpfsHash;
-  };
-
-  // Handle file upload and mint
-  const handleMint = async () => {
-    if (!file || !address) return;
-    setError(null);
-    try {
-      // 1. Upload image to IPFS
-      const imageCid = await uploadToIPFS(file);
-      const imageUrl = `https://gateway.pinata.cloud/ipfs/${imageCid}`;
-      // 2. Create metadata and upload to IPFS
-      const metadata = {
-        name: "My Unique NFT",
-        description: "An NFT minted from an uploaded image.",
-        image: imageUrl,
-      };
-      const metadataCid = await uploadMetadataToIPFS(metadata);
-      const metadataUrl = `https://gateway.pinata.cloud/ipfs/${metadataCid}`;
-      // 3. Mint NFT with wagmi
-      writeContract({
-        address: CONTRACT_ADDRESS,
-        abi: CONTRACT_ABI,
-        functionName: 'mintNFT',
-        args: [address, metadataUrl],
-      });
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Minting failed");
-    }
   };
 
   const handleTwitterLogin = async () => {
@@ -347,56 +342,38 @@ export default function Home() {
           )}
         </div>
 
-        {/* Twitter Integration Section */}
+        {/* Create Card Section */}
         <div className="mb-16 max-w-2xl mx-auto">
           {twitterUser ? (
-            <TwitterGreeting user={twitterUser} onDisconnect={handleTwitterDisconnect} />
-          ) : (
             <div className="p-8 rounded-2xl border-2" 
                  style={{ 
                    backgroundColor: '#001F18',
-                   borderColor: '#1DA1F2',
-                   boxShadow: '0 10px 30px rgba(29, 161, 242, 0.2)'
+                   borderColor: '#D4FF28',
+                   boxShadow: '0 10px 30px rgba(212, 255, 40, 0.2)'
                  }}>
-              <h2 className="text-2xl font-bold mb-6 text-center" style={{ color: '#F2EEE1' }}>
-                Connect Your Twitter
-              </h2>
-              <p className="text-center mb-6" style={{ color: '#2BFAE9' }}>
-                Connect your Twitter account to personalize your experience
-              </p>
-              <TwitterConnect onLogin={handleTwitterLogin} isLoading={twitterLoading} />
-            </div>
-          )}
-        </div>
-
-        {/* Mint Section (only if connected) */}
-        {isConnected && (
-          <div className="mb-16 p-8 rounded-2xl max-w-2xl mx-auto shadow-2xl border-2" 
-               style={{ 
-                 backgroundColor: '#001F18',
-                 borderColor: '#D4FF28',
-                 boxShadow: '0 20px 40px rgba(212, 255, 40, 0.2)'
-               }}>
-            <h2 className="text-2xl font-bold mb-6 text-center" style={{ color: '#F2EEE1' }}>
-              Mint New NFT
-            </h2>
-            <div className="space-y-6">
-              <div className="relative">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={e => setFile(e.target.files?.[0] ? new File([e.target.files[0]], e.target.files[0].name) : null)}
-                  className="w-full p-4 rounded-xl border-2 border-dashed transition-all duration-300"
-                  style={{ 
-                    borderColor: '#FF2DF4',
-                    backgroundColor: 'rgba(255, 45, 244, 0.1)',
-                    color: '#F2EEE1'
-                  }}
-                />
+              <div className="text-center mb-6">
+                <div className="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4" 
+                     style={{ borderColor: '#2BFAE9' }}>
+                  <Image 
+                    src={twitterUser.profileImage} 
+                    alt={twitterUser.name}
+                    width={96}
+                    height={96}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <h2 className="text-2xl font-bold mb-2" style={{ color: '#F2EEE1' }}>
+                  Welcome, {twitterUser.name}!
+                </h2>
+                <p className="text-sm" style={{ color: '#2BFAE9' }}>
+                  @{twitterUser.username}
+                </p>
               </div>
+              
+              {/* Mint Profile as NFT Button */}
               <button
                 onClick={handleMint}
-                disabled={!file || isPending}
+                disabled={isPending}
                 className="w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
                 style={{ 
                   background: isPending 
@@ -405,10 +382,11 @@ export default function Home() {
                   color: '#1A1400'
                 }}
               >
-                {isPending ? "Minting..." : "Mint NFT"}
+                {isPending ? "Minting..." : "Mint Profile as NFT"}
               </button>
+              
               {txHash && (
-                <div className="text-sm p-3 rounded-lg" style={{ backgroundColor: '#00122E', color: '#2BFAE9' }}>
+                <div className="text-sm p-3 rounded-lg mt-4" style={{ backgroundColor: '#00122E', color: '#2BFAE9' }}>
                   Transaction: {" "}
                   <a
                     href={`https://sepolia.etherscan.io/tx/${txHash}`}
@@ -422,13 +400,48 @@ export default function Home() {
                 </div>
               )}
               {error && (
-                <div className="text-sm p-3 rounded-lg" style={{ backgroundColor: '#FF1A1A', color: '#F2EEE1' }}>
+                <div className="text-sm p-3 rounded-lg mt-4" style={{ backgroundColor: '#FF1A1A', color: '#F2EEE1' }}>
                   {error}
                 </div>
               )}
+              
+              <button
+                onClick={handleTwitterDisconnect}
+                className="w-full mt-4 py-2 rounded-xl font-medium transition-all duration-300 hover:scale-105"
+                style={{ backgroundColor: '#FF1A1A', color: '#F2EEE1' }}
+              >
+                Disconnect Twitter
+              </button>
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="p-8 rounded-2xl border-2" 
+                 style={{ 
+                   backgroundColor: '#001F18',
+                   borderColor: '#FF2DF4',
+                   boxShadow: '0 10px 30px rgba(255, 45, 244, 0.2)'
+                 }}>
+              <h2 className="text-2xl font-bold mb-6 text-center" style={{ color: '#F2EEE1' }}>
+                Create Your Card
+              </h2>
+              <p className="text-center mb-6" style={{ color: '#2BFAE9' }}>
+                Connect your Twitter to create a personalized NFT card
+              </p>
+              <button
+                onClick={handleTwitterLogin}
+                disabled={twitterLoading}
+                className="w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+                style={{ 
+                  background: twitterLoading 
+                    ? 'linear-gradient(135deg, #FF1A1A 0%, #FF2DF4 100%)'
+                    : 'linear-gradient(135deg, #D4FF28 0%, #2BFAE9 100%)',
+                  color: '#1A1400'
+                }}
+              >
+                {twitterLoading ? "Connecting..." : "Create Card"}
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Owned NFTs Section */}
         {isConnected && ownedNFTs.length > 0 && (
