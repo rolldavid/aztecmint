@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 // Twitter OAuth 2.0 configuration
 const TWITTER_CLIENT_ID = process.env.TWITTER_CLIENT_ID!;
 const TWITTER_CLIENT_SECRET = process.env.TWITTER_CLIENT_SECRET!;
-const REDIRECT_URI = (process.env.NEXTAUTH_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000') + "/api/twitter/callback";
+const REDIRECT_URI = process.env.NEXTAUTH_URL + "/api/twitter/callback";
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,14 +17,17 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       // Redirect back to main page with error
-      const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+      const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+      const isProduction = process.env.NEXTAUTH_URL?.startsWith('https://');
+      const secureFlag = isProduction ? 'Secure; ' : '';
+      
       return new Response(null, {
         status: 302,
         headers: {
           'Location': `${baseUrl}?twitter_error=authorization_denied`,
           'Set-Cookie': [
-            "twitter_oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0",
-            "twitter_code_verifier=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0"
+            `twitter_oauth_state=; Path=/; HttpOnly; ${secureFlag}SameSite=Lax; Max-Age=0`,
+            `twitter_code_verifier=; Path=/; HttpOnly; ${secureFlag}SameSite=Lax; Max-Age=0`
           ].join(', ')
         }
       });
@@ -32,14 +35,17 @@ export async function GET(request: NextRequest) {
 
     if (!code || !state) {
       // Redirect back to main page with error
-      const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+      const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+      const isProduction = process.env.NEXTAUTH_URL?.startsWith('https://');
+      const secureFlag = isProduction ? 'Secure; ' : '';
+      
       return new Response(null, {
         status: 302,
         headers: {
           'Location': `${baseUrl}?twitter_error=missing_params`,
           'Set-Cookie': [
-            "twitter_oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0",
-            "twitter_code_verifier=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0"
+            `twitter_oauth_state=; Path=/; HttpOnly; ${secureFlag}SameSite=Lax; Max-Age=0`,
+            `twitter_code_verifier=; Path=/; HttpOnly; ${secureFlag}SameSite=Lax; Max-Age=0`
           ].join(', ')
         }
       });
@@ -47,22 +53,32 @@ export async function GET(request: NextRequest) {
 
     // Verify state and get code verifier from cookies
     const cookies = request.headers.get("cookie");
+    console.log("Received cookies:", cookies);
+    
     const stateCookie = cookies?.split(";").find(c => c.trim().startsWith("twitter_oauth_state="));
     const codeVerifierCookie = cookies?.split(";").find(c => c.trim().startsWith("twitter_code_verifier="));
     
     const storedState = stateCookie?.split("=")[1];
     const codeVerifier = codeVerifierCookie?.split("=")[1];
+    
+    console.log("Received state:", state);
+    console.log("Stored state:", storedState);
+    console.log("Code verifier present:", !!codeVerifier);
 
     if (state !== storedState) {
+      console.error("State mismatch:", { received: state, stored: storedState });
       // Redirect back to main page with error
-      const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+      const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+      const isProduction = process.env.NEXTAUTH_URL?.startsWith('https://');
+      const secureFlag = isProduction ? 'Secure; ' : '';
+      
       return new Response(null, {
         status: 302,
         headers: {
           'Location': `${baseUrl}?twitter_error=invalid_state`,
           'Set-Cookie': [
-            "twitter_oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0",
-            "twitter_code_verifier=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0"
+            `twitter_oauth_state=; Path=/; HttpOnly; ${secureFlag}SameSite=Lax; Max-Age=0`,
+            `twitter_code_verifier=; Path=/; HttpOnly; ${secureFlag}SameSite=Lax; Max-Age=0`
           ].join(', ')
         }
       });
@@ -70,14 +86,17 @@ export async function GET(request: NextRequest) {
 
     if (!codeVerifier) {
       // Redirect back to main page with error
-      const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+      const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+      const isProduction = process.env.NEXTAUTH_URL?.startsWith('https://');
+      const secureFlag = isProduction ? 'Secure; ' : '';
+      
       return new Response(null, {
         status: 302,
         headers: {
           'Location': `${baseUrl}?twitter_error=missing_verifier`,
           'Set-Cookie': [
-            "twitter_oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0",
-            "twitter_code_verifier=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0"
+            `twitter_oauth_state=; Path=/; HttpOnly; ${secureFlag}SameSite=Lax; Max-Age=0`,
+            `twitter_code_verifier=; Path=/; HttpOnly; ${secureFlag}SameSite=Lax; Max-Age=0`
           ].join(', ')
         }
       });
@@ -106,14 +125,17 @@ export async function GET(request: NextRequest) {
 
     if (!user.data) {
       // Redirect back to main page with error
-      const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+      const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+      const isProduction = process.env.NEXTAUTH_URL?.startsWith('https://');
+      const secureFlag = isProduction ? 'Secure; ' : '';
+      
       return new Response(null, {
         status: 302,
         headers: {
           'Location': `${baseUrl}?twitter_error=fetch_failed`,
           'Set-Cookie': [
-            "twitter_oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0",
-            "twitter_code_verifier=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0"
+            `twitter_oauth_state=; Path=/; HttpOnly; ${secureFlag}SameSite=Lax; Max-Age=0`,
+            `twitter_code_verifier=; Path=/; HttpOnly; ${secureFlag}SameSite=Lax; Max-Age=0`
           ].join(', ')
         }
       });
@@ -128,32 +150,38 @@ export async function GET(request: NextRequest) {
     };
 
     // Redirect back to main page with success and user data
-    const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
     const redirectUrl = new URL(baseUrl);
     redirectUrl.searchParams.set('twitter_success', 'true');
     redirectUrl.searchParams.set('twitter_user', JSON.stringify(userData));
+    
+    const isProduction = process.env.NEXTAUTH_URL?.startsWith('https://');
+    const secureFlag = isProduction ? 'Secure; ' : '';
     
     return new Response(null, {
       status: 302,
       headers: {
         'Location': redirectUrl.toString(),
         'Set-Cookie': [
-          "twitter_oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0",
-          "twitter_code_verifier=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0"
+          `twitter_oauth_state=; Path=/; HttpOnly; ${secureFlag}SameSite=Lax; Max-Age=0`,
+          `twitter_code_verifier=; Path=/; HttpOnly; ${secureFlag}SameSite=Lax; Max-Age=0`
         ].join(', ')
       }
     });
   } catch (error) {
     console.error("Twitter callback error:", error);
     // Redirect back to main page with error
-    const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const isProduction = process.env.NEXTAUTH_URL?.startsWith('https://');
+    const secureFlag = isProduction ? 'Secure; ' : '';
+    
     return new Response(null, {
       status: 302,
       headers: {
         'Location': `${baseUrl}?twitter_error=authentication_failed`,
         'Set-Cookie': [
-          "twitter_oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0",
-          "twitter_code_verifier=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0"
+          `twitter_oauth_state=; Path=/; HttpOnly; ${secureFlag}SameSite=Lax; Max-Age=0`,
+          `twitter_code_verifier=; Path=/; HttpOnly; ${secureFlag}SameSite=Lax; Max-Age=0`
         ].join(', ')
       }
     });
