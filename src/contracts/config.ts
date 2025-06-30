@@ -512,7 +512,7 @@ const _CONTRACT_ABI = [
 // Contract configuration
 export const CONTRACT_CONFIG = {
   // Update this address after deployment
-  address: "0x8Db661081b6e7a3E1348cD66A59aE1b33d17D07e" as `0x${string}`,
+  address: "0x0F1cc95E31abe5e33D3E7a9bc6478bfe0DAdd096" as `0x${string}`,
   abi: _CONTRACT_ABI,
 } as const;
 
