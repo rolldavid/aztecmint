@@ -5,18 +5,15 @@ import { sepolia } from "viem/chains";
 export const runtime = "nodejs";
 
 // Get RPC URL from environment variables
+// Only use backend variables (do NOT use NEXT_PUBLIC_ variables here)
 const getRpcUrl = () => {
-  // Try different environment variable formats
   let rpcUrl = process.env.SEPOLIA_RPC_URL;
-  
   if (!rpcUrl && process.env.INFURA_PROJECT_ID) {
     rpcUrl = `https://sepolia.infura.io/v3/${process.env.INFURA_PROJECT_ID}`;
   }
-  
   if (!rpcUrl) {
     throw new Error("No Sepolia RPC URL configured. Please set SEPOLIA_RPC_URL or INFURA_PROJECT_ID in your environment variables.");
   }
-  
   return rpcUrl;
 };
 
