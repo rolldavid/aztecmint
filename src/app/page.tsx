@@ -40,7 +40,6 @@ export default function Home() {
   const [polymathDescription, setPolymathDescription] = useState<string | null>(null);
   const [descLoading, setDescLoading] = useState(false);
   const [descError, setDescError] = useState<string | null>(null);
-  const [cardPngUrl, setCardPngUrl] = useState<string | null>(null);
   const [pendingMint, setPendingMint] = useState(false);
 
   // Check for Twitter callback on page load
