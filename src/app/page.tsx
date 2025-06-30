@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useAccount, useConnect, useDisconnect, useWriteContract, useReadContract } from "wagmi";
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from "../contracts/config";
 import Image from "next/image";
+import * as htmlToImage from "html-to-image";
 
 interface NFT {
   tokenId: number;
@@ -33,8 +34,12 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [twitterUser, setTwitterUser] = useState<TwitterUser | null>(null);
   const [twitterLoading, setTwitterLoading] = useState(false);
-  const boundingRef = useRef<DOMRect | null>(null);
+  const cardBoundingRef = useRef<DOMRect | null>(null);
+  const cardExportRef = useRef<HTMLDivElement | null>(null);
   const [nftMinted, setNftMinted] = useState(false);
+  const [polymathDescription, setPolymathDescription] = useState<string | null>(null);
+  const [descLoading, setDescLoading] = useState(false);
+  const [descError, setDescError] = useState<string | null>(null);
 
   // Check for Twitter callback on page load
   useEffect(() => {
@@ -269,31 +274,6 @@ export default function Home() {
     window.open(shareUrl, '_blank');
   };
 
-  // Card tilt effect handlers
-  const handleMouseEnter = (ev: React.MouseEvent<HTMLDivElement>) => {
-    boundingRef.current = ev.currentTarget.getBoundingClientRect();
-  };
-
-  const handleMouseLeave = () => {
-    boundingRef.current = null;
-  };
-
-  const handleMouseMove = (ev: React.MouseEvent<HTMLDivElement>) => {
-    if (!boundingRef.current) return;
-    
-    const x = ev.clientX - boundingRef.current.left;
-    const y = ev.clientY - boundingRef.current.top;
-    const xPercentage = x / boundingRef.current.width;
-    const yPercentage = y / boundingRef.current.height;
-    const xRotation = (xPercentage - 0.5) * 20;
-    const yRotation = (0.5 - yPercentage) * 20;
-
-    ev.currentTarget.style.setProperty("--x-rotation", `${yRotation}deg`);
-    ev.currentTarget.style.setProperty("--y-rotation", `${xRotation}deg`);
-    ev.currentTarget.style.setProperty("--x", `${xPercentage * 100}%`);
-    ev.currentTarget.style.setProperty("--y", `${yPercentage * 100}%`);
-  };
-
   // Handle minting Twitter profile as NFT
   const handleMint = async () => {
     if (!twitterUser) return;
@@ -383,7 +363,7 @@ export default function Home() {
     setError(null);
 
     // Development mode - bypass OAuth and ask for username
-    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
       const username = prompt('Enter a Twitter username to simulate (e.g., "DavidSteinrueck"):');
       if (username) {
         // Simulate Twitter user data
@@ -391,12 +371,13 @@ export default function Home() {
           id: "123456789",
           username: username,
           name: username.charAt(0).toUpperCase() + username.slice(1),
-          bio: `This is a simulated profile for @${username} in development mode.`,
+          bio: `Product marketing lead @aztecnetwork\n 🪿 | Building with @noirlang\n 👽 | Prev @openzeppelin\n & @chainlink\n | Market in prod`,
           profileImage: "https://pbs.twimg.com/profile_images/1907046935607013376/2rzn07BJ.jpg",
         };
         
         localStorage.setItem('twitterUser', JSON.stringify(mockUserData));
         setTwitterUser(mockUserData);
+        // No need to call generateCardImage in dev mode
       }
       setTwitterLoading(false);
       return;
@@ -418,6 +399,31 @@ export default function Home() {
       setTwitterLoading(false);
     }
   };
+
+  // Generate polymath description when Twitter user is set
+  useEffect(() => {
+    if (twitterUser && twitterUser.bio) {
+      setDescLoading(true);
+      setDescError(null);
+      fetch("/api/generate-polymath-description", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bio: twitterUser.bio }),
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.description) {
+            setPolymathDescription(data.description);
+          } else {
+            setDescError("Could not generate description.");
+          }
+        })
+        .catch(() => setDescError("Could not generate description."))
+        .finally(() => setDescLoading(false));
+    } else {
+      setPolymathDescription(null);
+    }
+  }, [twitterUser]);
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#1A1400' }}>
@@ -460,113 +466,144 @@ export default function Home() {
         {/* Create Card Section */}
         <div className="mb-16 max-w-2xl mx-auto">
           {twitterUser ? (
-            <div className="p-8 rounded-2xl border-2" 
-                 style={{ 
-                   backgroundColor: '#001F18',
-                   borderColor: '#D4FF28',
-                   boxShadow: '0 10px 30px rgba(212, 255, 40, 0.2)'
-                 }}>
-              
-              {/* Card Game Style UI */}
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold mb-6 text-center" style={{ color: '#F2EEE1' }}>
-                 Guild Member Card
-                </h2>
-                
-                {/* Card Container */}
-                <div 
-                  className="group relative mx-auto w-80 h-96 rounded-2xl overflow-hidden shadow-2xl transition-transform ease-out hover:[transform:rotateX(var(--x-rotation))_rotateY(var(--y-rotation))_scale(1.1)]"
-                  style={{ 
-                    background: 'linear-gradient(135deg, #D4FF28 0%, #2BFAE9 50%, #FF2DF4 100%)',
-                    border: '4px solid #F2EEE1',
+            descLoading && !descError ? (
+              <div className="flex items-center justify-center min-h-[328px]">
+                <span className="text-[#2E0026] text-lg italic opacity-70">Generating your Renaissance bio...</span>
+              </div>
+            ) : (
+              <div className="p-8 rounded-2xl border-2" 
+                   style={{ 
+                     backgroundColor: '#001F18',
+                     borderColor: '#D4FF28',
+                     boxShadow: '0 10px 30px rgba(212, 255, 40, 0.2)'
+                   }}>
+                {/* Leonardo-Style Horizontal Guild Card */}
+                <div
+                  ref={cardExportRef}
+                  className="guild-card flex flex-row items-center relative w-[497px] h-[328px] bg-[#f2eee1] border-2 border-[#D4FF28] shadow-lg p-6 mx-auto my-12 transition-transform ease-out will-change-transform [perspective:800px] rounded-2xl"
+                  style={{
+                    backgroundImage: `url(/bg.png), linear-gradient(#f2eee1, #e6e0c7)`,
+                    backgroundSize: 'cover',
+                    fontFamily: 'Crimson Pro, Georgia, serif',
+                    color: '#D4FF28',
+                    transform: `rotateX(var(--x-rotation, 0deg)) rotateY(var(--y-rotation, 0deg)) scale(var(--card-scale, 1))`,
                     transformStyle: 'preserve-3d',
-                    perspective: '800px'
+                    perspective: '800px',
                   }}
-                  onMouseMove={handleMouseMove}
-                  onMouseEnter={handleMouseEnter}
-                  onMouseLeave={handleMouseLeave}
+                  onMouseLeave={ev => {
+                    cardBoundingRef.current = null;
+                    ev.currentTarget.style.setProperty('--x-rotation', '0deg');
+                    ev.currentTarget.style.setProperty('--y-rotation', '0deg');
+                    ev.currentTarget.style.setProperty('--card-scale', '1');
+                  }}
+                  onMouseEnter={ev => {
+                    cardBoundingRef.current = ev.currentTarget.getBoundingClientRect();
+                  }}
+                  onMouseMove={ev => {
+                    if (!cardBoundingRef.current) return;
+                    const x = ev.clientX - cardBoundingRef.current.left;
+                    const y = ev.clientY - cardBoundingRef.current.top;
+                    const xPercentage = x / cardBoundingRef.current.width;
+                    const yPercentage = y / cardBoundingRef.current.height;
+                    const xRotation = (xPercentage - 0.5) * 20;
+                    const yRotation = (0.5 - yPercentage) * 20;
+                    ev.currentTarget.style.setProperty("--x-rotation", `${yRotation}deg`);
+                    ev.currentTarget.style.setProperty("--y-rotation", `${xRotation}deg`);
+                    ev.currentTarget.style.setProperty("--x", `${xPercentage * 100}%`);
+                    ev.currentTarget.style.setProperty("--y", `${yPercentage * 100}%`);
+                    ev.currentTarget.style.setProperty('--card-scale', '1.1');
+                  }}
                 >
-                  
-                  {/* Glare Effect */}
-                  <div 
-                    className="pointer-events-none absolute inset-0 group-hover:bg-[radial-gradient(at_var(--x)_var(--y),rgba(255,255,255,0.3)_20%,transparent_80%)]"
-                  />
-                  
-                  {/* Profile Image - Top 3/4 of card */}
-                  <div className="w-full h-72 relative overflow-hidden">
-                    <Image 
-                      src={twitterUser.profileImage} 
-                      alt={twitterUser.name}
-                      fill
-                      className="object-cover"
+                  {/* Flourishes */}
+                  <div className="flourish left absolute w-12 h-12 top-4 left-4 rotate-[15deg] opacity-80 pointer-events-none" style={{background: "url('/window.svg') no-repeat center/contain", filter: 'brightness(0) saturate(100%) invert(85%) sepia(3%) saturate(3462%) hue-rotate(72deg) brightness(1)'}} />
+                  <div className="flourish right absolute w-12 h-12 bottom-4 right-4 -rotate-[15deg] opacity-80 pointer-events-none" style={{background: "url('/window.svg') no-repeat center/contain", filter: 'brightness(0) saturate(100%) invert(85%) sepia(3%) saturate(3462%) hue-rotate(72deg) brightness(1)'}} />
+                  {/* Dashed border inside */}
+                  <div className="pointer-events-none absolute top-2 left-2 right-2 bottom-2 border-2 border-dashed border-[#D4FF28] z-0" />
+                  {/* Radial glare effect */}
+                  <div className="pointer-events-none absolute inset-0 group-hover:bg-[radial-gradient(at_var(--x)_var(--y),rgba(255,255,255,0.3)_20%,transparent_80%)] z-10" />
+                  {/* Profile Image */}
+                  <div className="profile-container flex-shrink-0 w-[120px] h-[120px] rounded-full border-4 border-[#D4FF28] overflow-hidden mr-6 z-10" style={{filter: 'grayscale(100%) contrast(1.2) brightness(0.8)'}}>
+                    <Image
+                      src={twitterUser.profileImage}
+                      alt={twitterUser.username}
+                      width={120}
+                      height={120}
+                      className="object-cover w-full h-full"
                     />
                   </div>
-                  
-                  {/* User Info - Bottom 1/4 of card */}
-                  <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end px-4 pb-2">
-                    <h3 className="text-lg font-bold mb-1" style={{ color: '#F2EEE1' }}>
-                      {twitterUser.name}
-                    </h3>
-                    <p className="text-sm font-medium" style={{ color: '#2BFAE9' }}>
+                  {/* Content */}
+                  <div className="content flex-1 z-10">
+                    <h1 className="guild-title text-2xl font-bold mb-2" style={{fontFamily: 'Crimson Pro, serif', color: '#D4FF28'}}>
+                      Guild of Curiosity
+                    </h1>
+                    <p className="twitter-handle text-base mb-4 opacity-90" style={{fontFamily: 'Crimson Pro, serif'}}>
                       @{twitterUser.username}
                     </p>
-                  </div>
-                  
-                  {/* Card Corner Decorations */}
-                  <div className="absolute top-2 left-2 text-xs font-bold" style={{ color: '#F2EEE1' }}>
-                    {twitterUser.username.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="absolute top-2 right-2 text-xs font-bold" style={{ color: '#F2EEE1' }}>
-                    {twitterUser.username.charAt(0).toUpperCase()}
+                    {descError ? (
+                      <p className="text-[#FF1A1A] text-base italic">{descError}</p>
+                    ) : (
+                      <span
+                        className="inline-block text-base px-3 py-2 rounded-lg"
+                        style={{
+                          fontFamily: 'EB Garamond, serif',
+                          background: '#2E0026',
+                          color: '#FF2DF4',
+                          lineHeight: 1.5,
+                          boxShadow: '0 2px 8px rgba(46,0,38,0.10)'
+                        }}
+                      >
+                        {polymathDescription || "Welcome to the Aztec Community! Thank you for being part of our guild."}
+                      </span>
+                    )}
                   </div>
                 </div>
+                
+                {/* Mint Profile as NFT Button */}
+                <button
+                  onClick={nftMinted ? handleShareOnX : handleMint}
+                  disabled={isPending}
+                  className="w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+                  style={{ 
+                    background: isPending 
+                      ? 'linear-gradient(135deg, #FF1A1A 0%, #FF2DF4 100%)'
+                      : nftMinted
+                      ? 'linear-gradient(135deg, #1DA1F2 0%, #0D8BD9 100%)'
+                      : 'linear-gradient(135deg, #D4FF28 0%, #2BFAE9 100%)',
+                    color: '#1A1400'
+                  }}
+                >
+                  {isPending ? "Minting..." : nftMinted ? "Share on X" : !isConnected ? "Connect Wallet to Mint" : "Mint Guild Card as NFT"}
+                </button>
+                
+                {txHash && (
+                  <div className="text-sm p-3 rounded-lg mt-4" style={{ backgroundColor: '#00122E', color: '#2BFAE9' }}>
+                    Transaction: {" "}
+                    <a
+                      href={`https://sepolia.etherscan.io/tx/${txHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline hover:no-underline"
+                      style={{ color: '#D4FF28' }}
+                    >
+                      {txHash}
+                    </a>
+                  </div>
+                )}
+                {error && (
+                  <div className="text-sm p-3 rounded-lg mt-4" style={{ backgroundColor: '#FF1A1A', color: '#F2EEE1' }}>
+                    {error}
+                  </div>
+                )}
+                
+                <button
+                  onClick={handleTwitterDisconnect}
+                  className="w-full mt-4 py-2 rounded-xl font-medium transition-all duration-300 hover:scale-105"
+                  style={{ border: '2px solid #FF1A1A', color: '#F2EEE1' }}
+                >
+                  Connect a Different Account
+                </button>
               </div>
-              
-              {/* Mint Profile as NFT Button */}
-              <button
-                onClick={nftMinted ? handleShareOnX : handleMint}
-                disabled={isPending}
-                className="w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
-                style={{ 
-                  background: isPending 
-                    ? 'linear-gradient(135deg, #FF1A1A 0%, #FF2DF4 100%)'
-                    : nftMinted
-                    ? 'linear-gradient(135deg, #1DA1F2 0%, #0D8BD9 100%)'
-                    : 'linear-gradient(135deg, #D4FF28 0%, #2BFAE9 100%)',
-                  color: '#1A1400'
-                }}
-              >
-                {isPending ? "Minting..." : nftMinted ? "Share on X" : !isConnected ? "Connect Wallet to Mint" : "Mint Guild Card as NFT"}
-              </button>
-              
-              {txHash && (
-                <div className="text-sm p-3 rounded-lg mt-4" style={{ backgroundColor: '#00122E', color: '#2BFAE9' }}>
-                  Transaction: {" "}
-                  <a
-                    href={`https://sepolia.etherscan.io/tx/${txHash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline hover:no-underline"
-                    style={{ color: '#D4FF28' }}
-                  >
-                    {txHash}
-                  </a>
-                </div>
-              )}
-              {error && (
-                <div className="text-sm p-3 rounded-lg mt-4" style={{ backgroundColor: '#FF1A1A', color: '#F2EEE1' }}>
-                  {error}
-                </div>
-              )}
-              
-              <button
-                onClick={handleTwitterDisconnect}
-                className="w-full mt-4 py-2 rounded-xl font-medium transition-all duration-300 hover:scale-105"
-                style={{ border: '2px solid #FF1A1A', color: '#F2EEE1' }}
-              >
-                Connect a Different Account
-              </button>
-            </div>
+            )
           ) : (
             <div className="p-8 rounded-2xl border-2" 
                  style={{ 
