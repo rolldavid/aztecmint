@@ -11,9 +11,11 @@
   "dependencies": {
     "@tanstack/react-query": "^5.81.5",
     "@wagmi/connectors": "^5.8.5",
+    "dom-to-image-more": "^3.6.0",
     "dotenv": "^17.0.0",
     "formdata-node": "^6.0.3",
     "html-to-image": "^1.11.13",
+    "html2canvas": "^1.4.1",
     "next": "15.3.4",
     "nft.storage": "^7.2.0",
     "node-fetch": "^3.3.2",

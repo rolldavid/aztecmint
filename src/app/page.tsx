@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useAccount, useConnect, useDisconnect, useWriteContract, useReadContract } from "wagmi";
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from "../contracts/config";
 import Image from "next/image";
+import html2canvas from 'html2canvas';
 
 interface NFT {
   tokenId: number;
@@ -39,6 +40,8 @@ export default function Home() {
   const [polymathDescription, setPolymathDescription] = useState<string | null>(null);
   const [descLoading, setDescLoading] = useState(false);
   const [descError, setDescError] = useState<string | null>(null);
+  const [cardPngUrl, setCardPngUrl] = useState<string | null>(null);
+  const [pendingMint, setPendingMint] = useState(false);
 
   // Check for Twitter callback on page load
   useEffect(() => {
@@ -276,35 +279,62 @@ export default function Home() {
   // Handle minting Twitter profile as NFT
   const handleMint = async () => {
     if (!twitterUser) return;
-    
+
     // Check if wallet is connected
     if (!isConnected) {
       setError('Please connect your MetaMask wallet to mint your guild card');
+      setPendingMint(true);
       // Try to connect wallet automatically
       try {
         await connect({ connector: connectors[0] });
       } catch (err) {
         console.error('Failed to connect wallet:', err);
         setError('Failed to connect wallet. Please connect manually and try again.');
+        setPendingMint(false);
       }
       return;
     }
-    
+
+    setPendingMint(false);
     if (!address) {
       setError('Wallet address not found. Please reconnect your wallet.');
       return;
     }
-    
+
     setError(null);
     try {
-      // 1. Use Twitter profile image directly
-      const imageUrl = twitterUser.profileImage;
-      
-      // 2. Create metadata and upload to IPFS
+      // 1. Generate PNG from card
+      if (!cardExportRef.current) {
+        setError('Card not found for export');
+        return;
+      }
+      const canvas = await html2canvas(cardExportRef.current, { useCORS: true, backgroundColor: null });
+      const dataUrl = canvas.toDataURL('image/png');
+      // Convert dataUrl to Blob
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const file = new File([blob], `${twitterUser.username}_guild_card.png`, { type: 'image/png' });
+
+      // 2. Upload PNG to IPFS
+      const formData = new FormData();
+      formData.append('file', file);
+      const uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!uploadRes.ok) {
+        const errData = await uploadRes.json();
+        setError(errData.error || 'Failed to upload image to IPFS');
+        return;
+      }
+      const uploadData = await uploadRes.json();
+      const imageUrl = `https://gateway.pinata.cloud/ipfs/${uploadData.IpfsHash}`;
+
+      // 3. Create metadata and upload to IPFS
       const firstName = twitterUser.name?.split(' ')[0] || 'Anonymous';
       const metadata = {
         name: `${firstName}'s Guild Card`,
-        description: `A personalized guild member card for ${twitterUser.name} (@${twitterUser.username}). ${twitterUser.bio || ''}`,
+        description: polymathDescription || `A personalized guild member card for ${twitterUser.name} (@${twitterUser.username}). ${twitterUser.bio || ''}`,
         image: imageUrl,
         attributes: [
           {
@@ -312,15 +342,15 @@ export default function Home() {
             value: twitterUser.username
           },
           {
-            trait_type: "Twitter Bio",
-            value: twitterUser.bio || "No bio"
+            trait_type: "Polymath Bio",
+            value: polymathDescription || twitterUser.bio || "No bio"
           }
         ]
       };
       const metadataCid = await uploadMetadataToIPFS(metadata);
       const metadataUrl = `https://gateway.pinata.cloud/ipfs/${metadataCid}`;
-      
-      // 3. Mint NFT with wagmi
+
+      // 4. Mint NFT with wagmi
       writeContract({
         address: CONTRACT_ADDRESS,
         abi: CONTRACT_ABI,
@@ -424,6 +454,32 @@ export default function Home() {
     }
   }, [twitterUser]);
 
+  const handleDownloadCard = async () => {
+    try {
+      if (!cardExportRef.current) {
+        console.error('cardExportRef.current is null');
+        return;
+      }
+      const canvas = await html2canvas(cardExportRef.current, { useCORS: true, backgroundColor: null });
+      const dataUrl = canvas.toDataURL('image/png');
+      // Download the PNG
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = `${twitterUser?.username || 'guild_card'}.png`;
+      link.click();
+    } catch (err) {
+      console.error('Failed in handleDownloadCard:', err);
+    }
+  };
+
+  // Automatically mint after wallet connection if pendingMint is true
+  useEffect(() => {
+    if (pendingMint && isConnected) {
+      handleMint();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingMint, isConnected]);
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#1A1400' }}>
       {/* Background gradient overlay */}
@@ -519,8 +575,6 @@ export default function Home() {
                     const yRotation = (0.5 - yPercentage) * 20;
                     ev.currentTarget.style.setProperty("--x-rotation", `${yRotation}deg`);
                     ev.currentTarget.style.setProperty("--y-rotation", `${xRotation}deg`);
-                    ev.currentTarget.style.setProperty("--x", `${xPercentage * 100}%`);
-                    ev.currentTarget.style.setProperty("--y", `${yPercentage * 100}%`);
                     ev.currentTarget.style.setProperty('--card-scale', '1.1');
                   }}
                 >
@@ -528,15 +582,19 @@ export default function Home() {
                   <div className="pointer-events-none absolute top-2 left-2 right-2 bottom-2 border-2 border-dashed border-[#D4FF28] z-0" />
                   {/* Radial glare effect */}
                   <div className="pointer-events-none absolute inset-0 group-hover:bg-[radial-gradient(at_var(--x)_var(--y),rgba(255,255,255,0.3)_20%,transparent_80%)] z-10" />
-                  {/* Profile Image */}
+                  {/* Profile Image (use proxy for PNG export) */}
                   <div className="profile-container flex-shrink-0 w-[120px] h-[120px] rounded-full border-4 border-[#D4FF28] overflow-hidden mr-6 z-10" style={{filter: 'grayscale(100%) contrast(1.2) brightness(0.8)'}}>
-                    <Image
-                      src={twitterUser.profileImage}
-                      alt={twitterUser.username}
-                      width={120}
-                      height={120}
-                      className="object-cover w-full h-full"
-                    />
+                    {twitterUser?.profileImage ? (
+                      <img
+                        src={`/api/proxy-image?url=${encodeURIComponent(twitterUser.profileImage)}`}
+                        alt={twitterUser.username}
+                        width={120}
+                        height={120}
+                        style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                      />
+                    ) : (
+                      <span className="text-[#001F18] font-bold">No Image</span>
+                    )}
                   </div>
                   {/* Content */}
                   <div className="content flex-1 z-10">
@@ -563,6 +621,18 @@ export default function Home() {
                       </span>
                     )}
                   </div>
+                </div>
+                
+                {/* Download Card as PNG Link */}
+                <div className="w-full flex justify-center mt-2 mb-8">
+                  <a
+                    href="#"
+                    onClick={e => { e.preventDefault(); handleDownloadCard(); }}
+                    className="text-base font-medium hover:underline"
+                    style={{ color: '#2BFAE9' }}
+                  >
+                    Download Card as PNG
+                  </a>
                 </div>
                 
                 {/* Mint Profile as NFT Button */}
@@ -650,37 +720,14 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {ownedNFTs.map((nft) => (
                 <div key={nft.tokenId} className="group relative overflow-hidden rounded-2xl shadow-2xl transition-all duration-500 hover:scale-105"
-                     style={{ backgroundColor: '#001F18' }}>
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#D4FF28]/20 to-[#2BFAE9]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                     style={{ backgroundColor: '#001F18', aspectRatio: '497/328', width: '100%', maxWidth: 497, margin: '0 auto' }}>
                   {nft.metadata?.image && (
-                    <div className="w-full h-64 relative overflow-hidden">
-                      <Image 
-                        src={nft.metadata.image} 
-                        alt={nft.metadata.name}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
+                    <img 
+                      src={nft.metadata.image} 
+                      alt={nft.metadata.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    />
                   )}
-                  <div className="p-6">
-                    <h3 className="font-bold text-xl mb-3" style={{ color: '#F2EEE1' }}>
-                      {nft.metadata?.name || `NFT #${nft.tokenId}`}
-                    </h3>
-                    <p className="text-sm mb-4" style={{ color: '#2BFAE9' }}>
-                      {nft.metadata?.description || 'No description'}
-                    </p>
-                    <div className="space-y-2">
-                      <p className="text-xs" style={{ color: '#D4FF28' }}>
-                        Token ID: {nft.tokenId}
-                      </p>
-                      <p className="text-xs" style={{ color: '#D4FF28' }}>
-                        Owner: {nft.owner && typeof nft.owner === 'string' && nft.owner.length >= 10 
-                          ? `${nft.owner.slice(0, 6)}...${nft.owner.slice(-4)}`
-                          : nft.owner || 'Unknown'
-                        }
-                      </p>
-                    </div>
-                  </div>
                 </div>
               ))}
             </div>
@@ -708,37 +755,14 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {nfts.map((nft) => (
                 <div key={nft.tokenId} className="group relative overflow-hidden rounded-2xl shadow-xl transition-all duration-500 hover:scale-105 hover:shadow-2xl"
-                     style={{ backgroundColor: '#001F18' }}>
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#FF2DF4]/10 to-[#2BFAE9]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                     style={{ backgroundColor: '#001F18', aspectRatio: '497/328', width: '100%', maxWidth: 497, margin: '0 auto' }}>
                   {nft.metadata?.image && (
-                    <div className="w-full h-48 relative overflow-hidden">
-                      <Image 
-                        src={nft.metadata.image} 
-                        alt={nft.metadata.name}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
+                    <img 
+                      src={nft.metadata.image} 
+                      alt={nft.metadata.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    />
                   )}
-                  <div className="p-4">
-                    <h3 className="font-bold text-lg mb-2" style={{ color: '#F2EEE1' }}>
-                      {nft.metadata?.name || `NFT #${nft.tokenId}`}
-                    </h3>
-                    <p className="text-sm mb-3 line-clamp-2" style={{ color: '#2BFAE9' }}>
-                      {nft.metadata?.description || 'No description'}
-                    </p>
-                    <div className="space-y-1">
-                      <p className="text-xs" style={{ color: '#D4FF28' }}>
-                        Token ID: {nft.tokenId}
-                      </p>
-                      <p className="text-xs" style={{ color: '#D4FF28' }}>
-                        Owner: {nft.owner && typeof nft.owner === 'string' && nft.owner.length >= 10 
-                          ? `${nft.owner.slice(0, 6)}...${nft.owner.slice(-4)}`
-                          : nft.owner || 'Unknown'
-                        }
-                      </p>
-                    </div>
-                  </div>
                 </div>
               ))}
             </div>
