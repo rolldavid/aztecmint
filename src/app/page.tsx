@@ -504,7 +504,7 @@ export default function Home() {
   }, [pendingMint, isConnected]);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A1400' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#1A1400', backgroundImage: 'url(/background.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
       {/* Background gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-[#001F18]/20 pointer-events-none"></div>
       
@@ -557,7 +557,13 @@ export default function Home() {
           {twitterUser ? (
             descLoading && !descError ? (
               <div className="flex items-center justify-center min-h-[328px]">
-                <span className="text-[#2E0026] text-lg italic opacity-70">Generating your Renaissance bio...</span>
+                <div className="flex items-center justify-center">
+                  <svg className="animate-spin h-8 w-8 text-[#2E0026] opacity-70 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                  </svg>
+                  
+                </div>
               </div>
             ) : (
               <div className="p-8 rounded-2xl border-2" 
@@ -761,13 +767,13 @@ export default function Home() {
           ) : nfts.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {nfts.map((nft) => (
-                <div key={nft.tokenId} className="group relative overflow-hidden rounded-2xl shadow-xl transition-all duration-500 hover:scale-105 hover:shadow-2xl"
-                     style={{ backgroundColor: '#001F18', aspectRatio: '497/328', width: '100%', maxWidth: 497, margin: '0 auto' }}>
+                <div key={nft.tokenId} className="group relative overflow-hidden rounded-2xl shadow-xl transition-all duration-500 hover:scale-105 hover:shadow-2xl p-4"
+                     style={{ backgroundColor: '#001F18', width: '100%', maxWidth: 497, margin: '0 auto', height: 400 }}>
                   {nft.metadata?.image && (
                     <img 
                       src={nft.metadata.image} 
                       alt={nft.metadata.name}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                      style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
                     />
                   )}
                 </div>
