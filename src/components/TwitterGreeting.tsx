@@ -16,16 +16,17 @@ interface TwitterGreetingProps {
 
 export default function TwitterGreeting({ user, onDisconnect }: TwitterGreetingProps) {
   return (
-    <div className="p-6 rounded-2xl border-2" 
+    <div className="p-6 border-2" 
          style={{ 
            backgroundColor: '#001F18',
            borderColor: '#1DA1F2',
-           boxShadow: '0 10px 30px rgba(29, 161, 242, 0.2)'
+           boxShadow: '0 10px 30px rgba(29, 161, 242, 0.2)',
+           borderRadius: 0
          }}>
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 rounded-full border-2 overflow-hidden" 
-               style={{ borderColor: '#1DA1F2' }}>
+          <div className="w-12 h-12 border-2 overflow-hidden" 
+               style={{ borderColor: '#1DA1F2', borderRadius: 0 }}>
             <Image 
               src={user.profileImage} 
               alt={user.name}
@@ -45,8 +46,8 @@ export default function TwitterGreeting({ user, onDisconnect }: TwitterGreetingP
         </div>
         <button
           onClick={onDisconnect}
-          className="px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 hover:scale-105"
-          style={{ backgroundColor: '#FF1A1A', color: '#F2EEE1' }}
+          className="px-4 py-2 text-sm font-medium transition-all duration-300 hover:scale-105"
+          style={{ backgroundColor: '#2e0700', color: '#F2EEE1', borderRadius: 0 }}
         >
           Disconnect
         </button>

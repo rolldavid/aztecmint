@@ -503,6 +503,23 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingMint, isConnected]);
 
+  // Guilds and backgrounds
+  const guilds = [
+    { bg: '/bg0.png', name: 'Guild of Obsession' },
+    { bg: '/bg1.png', name: 'Guild of Genius' },
+    { bg: '/bg2.png', name: 'Guild of Integrity' },
+    { bg: '/bg3.png', name: 'Guild of Agency' },
+  ];
+  const [guildIdx, setGuildIdx] = useState<number | null>(null);
+  useEffect(() => {
+    if (guildIdx === null) {
+      const idx = Math.floor(Math.random() * guilds.length);
+      setGuildIdx(idx);
+    }
+  }, [guildIdx, guilds.length]);
+  const cardBg = guildIdx !== null ? guilds[guildIdx].bg : undefined;
+  const guildName = guildIdx !== null ? guilds[guildIdx].name : '';
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#1A1400', backgroundImage: 'url(/background.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
       {/* Background gradient overlay */}
@@ -511,11 +528,12 @@ export default function Home() {
       <div className="relative z-10 p-8 pb-20 sm:p-20 font-[family-name:var(--font-geist-sans)]">
         {/* Top bar: Logo/Connect/Disconnect */}
         <div className="flex justify-between items-center mb-12">
-          <div className="flex items-center justify-center rounded-2xl p-4 shadow relative" style={{ minWidth: 160, minHeight: 100 }}>
-            <div className="absolute inset-0 rounded-2xl z-0" style={{
+          <div className="flex items-center justify-center p-4 shadow relative" style={{ minWidth: 160, minHeight: 100, borderRadius: 0 }}>
+            <div className="absolute inset-0 z-0" style={{
               background: 'radial-gradient(circle, #FF2DF4 0%, transparent 80%)',
               filter: 'blur(40px)',
-              opacity: 0.9
+              opacity: 0.9,
+              borderRadius: 0
             }} />
             <Image
               src="/azlogo.png"
@@ -527,13 +545,13 @@ export default function Home() {
           </div>
           {isConnected ? (
             <div className="flex items-center gap-4">
-              <span className="text-sm px-3 py-1 rounded-full" style={{ backgroundColor: '#D4FF28', color: '#1A1400' }}>
+              <span className="text-sm px-3 py-1" style={{ backgroundColor: '#D4FF28', color: '#1A1400', borderRadius: 0 }}>
                 {address?.slice(0, 6)}...{address?.slice(-4)}
               </span>
               <button
                 onClick={() => disconnect()}
-                className="px-6 py-2 rounded-full font-medium transition-all duration-300 hover:scale-105"
-                style={{ backgroundColor: '#FF1A1A', color: '#F2EEE1' }}
+                className="px-6 py-2 font-medium transition-all duration-300 hover:scale-105"
+                style={{ backgroundColor: '#2e0700', color: '#F2EEE1', borderRadius: 0 }}
               >
                 Disconnect
               </button>
@@ -541,10 +559,11 @@ export default function Home() {
           ) : (
             <button
               onClick={() => connect({ connector: connectors[0] })}
-              className="px-8 py-3 rounded-full font-medium transition-all duration-300 hover:scale-105 shadow-lg"
+              className="px-8 py-3 font-medium transition-all duration-300 hover:scale-105 shadow-lg"
               style={{ 
                 background: 'linear-gradient(135deg, #D4FF28 0%, #2BFAE9 100%)',
-                color: '#1A1400'
+                color: '#1A1400',
+                borderRadius: 0
               }}
             >
               Connect Wallet
@@ -566,24 +585,26 @@ export default function Home() {
                 </div>
               </div>
             ) : (
-              <div className="p-8 rounded-2xl border-2" 
+              <div className="p-8 border-2" 
                    style={{ 
                      backgroundColor: '#001F18',
                      borderColor: '#D4FF28',
-                     boxShadow: '0 10px 30px rgba(212, 255, 40, 0.2)'
+                     boxShadow: '0 10px 30px rgba(212, 255, 40, 0.2)',
+                     borderRadius: 0
                    }}>
                 {/* Leonardo-Style Horizontal Guild Card */}
                 <div
                   ref={cardExportRef}
-                  className="guild-card flex flex-row items-center relative w-[497px] h-[328px] bg-[#f2eee1] border-2 border-[#D4FF28] shadow-lg p-8 mx-auto my-12 transition-transform ease-out will-change-transform [perspective:800px] rounded-2xl overflow-hidden"
+                  className="guild-card flex flex-row items-center relative w-[497px] h-[328px] bg-[#f2eee1] border-2 border-[#D4FF28] shadow-lg p-8 mx-auto my-12 transition-transform ease-out will-change-transform [perspective:800px] overflow-hidden"
                   style={{
-                    backgroundImage: `url(/bg.png), linear-gradient(#f2eee1, #e6e0c7)`,
+                    backgroundImage: cardBg ? `url(${cardBg}), linear-gradient(#f2eee1, #e6e0c7)` : `linear-gradient(#f2eee1, #e6e0c7)`,
                     backgroundSize: 'cover',
                     fontFamily: 'Crimson Pro, serif',
                     color: '#D4FF28',
                     transform: `rotateX(var(--x-rotation, 0deg)) rotateY(var(--y-rotation, 0deg)) scale(var(--card-scale, 1))`,
                     transformStyle: 'preserve-3d',
                     perspective: '800px',
+                    borderRadius: 0,
                   }}
                   onMouseLeave={ev => {
                     cardBoundingRef.current = null;
@@ -608,11 +629,11 @@ export default function Home() {
                   }}
                 >
                   {/* Dashed border inside */}
-                  <div className="pointer-events-none absolute top-2 left-2 right-2 bottom-2 border-2 border-dashed border-[#D4FF28] z-0" />
+                  <div className="pointer-events-none absolute top-2 left-2 right-2 bottom-2 border-2 border-dashed border-[#D4FF28] z-0" style={{ borderRadius: 0 }} />
                   {/* Radial glare effect */}
                   <div className="pointer-events-none absolute inset-0 group-hover:bg-[radial-gradient(at_var(--x)_var(--y),rgba(255,255,255,0.3)_20%,transparent_80%)] z-10" />
                   {/* Profile Image (use proxy for PNG export) */}
-                  <div className="profile-container flex-shrink-0 w-[120px] h-[120px] rounded-full border-4 border-[#D4FF28] overflow-hidden mr-6 z-10" style={{filter: 'grayscale(100%) contrast(1.2) brightness(0.8)'}}>
+                  <div className="profile-container flex-shrink-0 w-[120px] h-[120px] border-4 border-[#D4FF28] overflow-hidden mr-6 z-10" style={{filter: 'grayscale(100%) contrast(1.2) brightness(0.8)', borderRadius: 0}}>
                     {twitterUser?.profileImage ? (
                       <img
                         src={`/api/proxy-image?url=${encodeURIComponent(twitterUser.profileImage)}`}
@@ -627,8 +648,18 @@ export default function Home() {
                   </div>
                   {/* Content */}
                   <div className="content flex-1 z-10">
-                    <h1 className="guild-title text-2xl font-bold mb-2" style={{fontFamily: 'Crimson Pro, serif', color: '#D4FF28'}}>
-                      Guild of Curiosity
+                    <h1 
+                      className="guild-title text-2xl font-bold mb-2 inline-block"
+                      style={{
+                        fontFamily: 'Crimson Pro, serif',
+                        color: '#D4FF28',
+                        background: '#00122e',
+                        padding: '0.25em 0.75em',
+                        borderRadius: 0,
+                        boxShadow: '0 2px 8px rgba(0,18,46,0.15)'
+                      }}
+                    >
+                      {guildName}
                     </h1>
                     <p className="twitter-handle text-base mb-4 opacity-90" style={{fontFamily: 'Crimson Pro, serif'}}>
                       @{twitterUser.username}
@@ -637,13 +668,14 @@ export default function Home() {
                       <p className="text-[#FF1A1A] text-base italic">{descError}</p>
                     ) : (
                       <span
-                        className="inline-block text-base px-3 py-2 rounded-lg"
+                        className="inline-block text-base px-3 py-2"
                         style={{
                           fontFamily: 'EB Garamond, serif',
                           background: '#2E0026',
                           color: '#FF2DF4',
                           lineHeight: 1.5,
-                          boxShadow: '0 2px 8px rgba(46,0,38,0.10)'
+                          boxShadow: '0 2px 8px rgba(46,0,38,0.10)',
+                          borderRadius: 0
                         }}
                       >
                         {polymathDescription || "Welcome to the Aztec Community! Thank you for being part of our guild."}
@@ -659,7 +691,7 @@ export default function Home() {
                 <button
                   onClick={nftMinted ? handleShareOnX : handleMint}
                   disabled={isPending}
-                  className="w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+                  className="w-full py-4 font-bold text-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
                   style={{ 
                     background: isPending 
                       ? 'linear-gradient(135deg, #FF1A1A 0%, #FF2DF4 100%)'
@@ -667,14 +699,15 @@ export default function Home() {
                       ? 'linear-gradient(135deg, #1DA1F2 0%, #0D8BD9 100%)'
                       : 'linear-gradient(135deg, #D4FF28 0%, #2BFAE9 100%)',
                     color: '#1A1400',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    borderRadius: 0
                   }}
                 >
                   {isPending ? "Minting..." : nftMinted ? "Share on X" : !isConnected ? "Connect Wallet to Mint" : "Mint Guild Card as NFT"}
                 </button>
                 
                 {txHash && (
-                  <div className="text-sm p-3 rounded-lg mt-4" style={{ backgroundColor: '#00122E', color: '#2BFAE9' }}>
+                  <div className="text-sm p-3 mt-4" style={{ backgroundColor: '#00122E', color: '#2BFAE9', borderRadius: 0 }}>
                     Transaction: {" "}
                     <a
                       href={`https://sepolia.etherscan.io/tx/${txHash}`}
@@ -688,7 +721,7 @@ export default function Home() {
                   </div>
                 )}
                 {error && (
-                  <div className="text-sm p-3 rounded-lg mt-4" style={{ backgroundColor: '#FF1A1A', color: '#F2EEE1' }}>
+                  <div className="text-sm p-3 mt-4" style={{ backgroundColor: '#FF1A1A', color: '#F2EEE1', borderRadius: 0 }}>
                     {error}
                   </div>
                 )}
@@ -696,13 +729,13 @@ export default function Home() {
                 
                 <button
                   onClick={e => { e.preventDefault(); handleDownloadCard(); }}
-                  className="w-full mt-4 py-2 rounded-xl font-medium transition-all duration-300 hover:scale-105"
+                  className="w-full mt-4 py-2 font-medium transition-all duration-300 hover:scale-105"
                   style={{ 
                     background: 'linear-gradient(135deg, #FF2DF4 0%, #2BFAE9 100%)',
                     color: '#fff',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    borderRadius: 0
                   }}
-                  
                 >
                   Download Card PNG
                 </button>
@@ -718,11 +751,12 @@ export default function Home() {
               </div>
             )
           ) : (
-            <div className="p-8 rounded-2xl border-2" 
+            <div className="p-8 border-2" 
                  style={{ 
                    backgroundColor: '#001F18',
                    borderColor: '#FF2DF4',
-                   boxShadow: '0 10px 30px rgba(255, 45, 244, 0.2)'
+                   boxShadow: '0 10px 30px rgba(255, 45, 244, 0.2)',
+                   borderRadius: 0
                  }}>
               <h2 className="text-2xl font-bold mb-6 text-center" style={{ color: '#F2EEE1' }}>
                 Join the Aztec Guild
@@ -733,12 +767,13 @@ export default function Home() {
               <button
                 onClick={handleTwitterLogin}
                 disabled={twitterLoading}
-                className="w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+                className="w-full py-4 font-bold text-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
                 style={{ 
                   background: twitterLoading 
                     ? 'linear-gradient(135deg, #FF1A1A 0%, #FF2DF4 100%)'
                     : 'linear-gradient(135deg, #D4FF28 0%, #2BFAE9 100%)',
-                  color: '#1A1400'
+                  color: '#1A1400',
+                  borderRadius: 0
                 }}
               >
                 {twitterLoading ? "Connecting..." : "Generate Member Card"}
@@ -753,8 +788,8 @@ export default function Home() {
             <h2 className="text-2xl font-bold" style={{ color: '#F2EEE1' }}>
               All Guild Members
             </h2>
-            <div className="px-4 py-2 rounded-full text-sm font-medium" 
-                 style={{ backgroundColor: '#00122E', color: '#2BFAE9' }}>
+            <div className="px-4 py-2 text-sm font-medium" 
+                 style={{ backgroundColor: '#00122E', color: '#2BFAE9', borderRadius: 0 }}>
               Total: {tokenCounter ? Number(tokenCounter) : 0}
             </div>
           </div>
@@ -767,8 +802,8 @@ export default function Home() {
           ) : nfts.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {nfts.map((nft) => (
-                <div key={nft.tokenId} className="group relative overflow-hidden rounded-2xl shadow-xl transition-all duration-500 hover:scale-105 hover:shadow-2xl p-4"
-                     style={{ backgroundColor: '#001F18', width: '100%', maxWidth: 497, margin: '0 auto', height: 400 }}>
+                <div key={nft.tokenId} className="group relative overflow-hidden shadow-xl transition-all duration-500 hover:scale-105 hover:shadow-2xl p-4"
+                     style={{ backgroundColor: '#001F18', width: '100%', maxWidth: 497, margin: '0 auto', height: 400, borderRadius: 0 }}>
                   {nft.metadata?.image && (
                     <img 
                       src={nft.metadata.image} 

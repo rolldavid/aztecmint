@@ -23,10 +23,11 @@ export default function TwitterConnect({ onLogin, isLoading = false }: TwitterCo
       <button
         onClick={handleTwitterLogin}
         disabled={isLoading}
-        className="w-full py-3 px-6 rounded-xl font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-3"
+        className="w-full py-3 px-6 font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-3"
         style={{ 
           background: 'linear-gradient(135deg, #1DA1F2 0%, #0D8BD9 100%)',
-          color: '#FFFFFF'
+          color: '#FFFFFF',
+          borderRadius: 0
         }}
       >
         {isLoading ? (
@@ -45,7 +46,7 @@ export default function TwitterConnect({ onLogin, isLoading = false }: TwitterCo
       </button>
       
       {error && (
-        <div className="text-sm p-3 rounded-lg" style={{ backgroundColor: '#FF1A1A', color: '#F2EEE1' }}>
+        <div className="text-sm p-3" style={{ backgroundColor: '#FF1A1A', color: '#F2EEE1', borderRadius: 0 }}>
           {error}
         </div>
       )}
