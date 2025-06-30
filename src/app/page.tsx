@@ -711,29 +711,6 @@ export default function Home() {
           )}
         </div>
 
-        {/* Owned NFTs Section */}
-        {isConnected && ownedNFTs.length > 0 && (
-          <div className="mb-16">
-            <h2 className="text-2xl font-bold mb-8 text-center" style={{ color: '#F2EEE1' }}>
-              Your NFTs
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {ownedNFTs.map((nft) => (
-                <div key={nft.tokenId} className="group relative overflow-hidden rounded-2xl shadow-2xl transition-all duration-500 hover:scale-105"
-                     style={{ backgroundColor: '#001F18', aspectRatio: '497/328', width: '100%', maxWidth: 497, margin: '0 auto' }}>
-                  {nft.metadata?.image && (
-                    <img 
-                      src={nft.metadata.image} 
-                      alt={nft.metadata.name}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* All NFTs Section */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-8">
