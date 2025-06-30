@@ -3,7 +3,6 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useAccount, useConnect, useDisconnect, useWriteContract, useReadContract } from "wagmi";
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from "../contracts/config";
 import Image from "next/image";
-import * as htmlToImage from "html-to-image";
 
 interface NFT {
   tokenId: number;
@@ -431,10 +430,21 @@ export default function Home() {
       <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-[#001F18]/20 pointer-events-none"></div>
       
       <div className="relative z-10 p-8 pb-20 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-        {/* Top bar: Connect/Disconnect */}
+        {/* Top bar: Logo/Connect/Disconnect */}
         <div className="flex justify-between items-center mb-12">
-          <div className="text-3xl font-bold" style={{ color: '#F2EEE1' }}>
-            AztecMint
+          <div className="flex items-center justify-center rounded-2xl p-4 shadow relative" style={{ minWidth: 160, minHeight: 100 }}>
+            <div className="absolute inset-0 rounded-2xl z-0" style={{
+              background: 'radial-gradient(circle, #FF2DF4 0%, transparent 80%)',
+              filter: 'blur(40px)',
+              opacity: 0.9
+            }} />
+            <Image
+              src="/azlogo.png"
+              alt="Aztec Logo"
+              width={120}
+              height={80}
+              className="object-contain relative z-10 drop-shadow-[0_4px_32px_rgba(255,45,244,0.5)]"
+            />
           </div>
           {isConnected ? (
             <div className="flex items-center gap-4">
@@ -480,11 +490,11 @@ export default function Home() {
                 {/* Leonardo-Style Horizontal Guild Card */}
                 <div
                   ref={cardExportRef}
-                  className="guild-card flex flex-row items-center relative w-[497px] h-[328px] bg-[#f2eee1] border-2 border-[#D4FF28] shadow-lg p-6 mx-auto my-12 transition-transform ease-out will-change-transform [perspective:800px] rounded-2xl"
+                  className="guild-card flex flex-row items-center relative w-[497px] h-[328px] bg-[#f2eee1] border-2 border-[#D4FF28] shadow-lg p-8 mx-auto my-12 transition-transform ease-out will-change-transform [perspective:800px] rounded-2xl overflow-hidden"
                   style={{
                     backgroundImage: `url(/bg.png), linear-gradient(#f2eee1, #e6e0c7)`,
                     backgroundSize: 'cover',
-                    fontFamily: 'Crimson Pro, Georgia, serif',
+                    fontFamily: 'Crimson Pro, serif',
                     color: '#D4FF28',
                     transform: `rotateX(var(--x-rotation, 0deg)) rotateY(var(--y-rotation, 0deg)) scale(var(--card-scale, 1))`,
                     transformStyle: 'preserve-3d',
@@ -514,9 +524,6 @@ export default function Home() {
                     ev.currentTarget.style.setProperty('--card-scale', '1.1');
                   }}
                 >
-                  {/* Flourishes */}
-                  <div className="flourish left absolute w-12 h-12 top-4 left-4 rotate-[15deg] opacity-80 pointer-events-none" style={{background: "url('/window.svg') no-repeat center/contain", filter: 'brightness(0) saturate(100%) invert(85%) sepia(3%) saturate(3462%) hue-rotate(72deg) brightness(1)'}} />
-                  <div className="flourish right absolute w-12 h-12 bottom-4 right-4 -rotate-[15deg] opacity-80 pointer-events-none" style={{background: "url('/window.svg') no-repeat center/contain", filter: 'brightness(0) saturate(100%) invert(85%) sepia(3%) saturate(3462%) hue-rotate(72deg) brightness(1)'}} />
                   {/* Dashed border inside */}
                   <div className="pointer-events-none absolute top-2 left-2 right-2 bottom-2 border-2 border-dashed border-[#D4FF28] z-0" />
                   {/* Radial glare effect */}
