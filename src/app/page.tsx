@@ -698,7 +698,7 @@ export default function Home() {
                   }}
                   
                 >
-                  Download Guild Card PNG
+                  Download Card PNG
                 </button>
 
                 <div
