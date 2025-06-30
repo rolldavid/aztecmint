@@ -45,7 +45,11 @@ export async function POST(req: NextRequest) {
 
     console.log(`Contract read result for ${functionName}:`, result);
 
-    return new Response(JSON.stringify({ data: result }), { status: 200 });
+    // Fix: Convert BigInt to string for JSON serialization
+    return new Response(
+      JSON.stringify({ data: result }, (_, v) => (typeof v === 'bigint' ? v.toString() : v)),
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Contract read error:", error);
     return new Response(JSON.stringify({ 

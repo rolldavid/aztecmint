@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useAccount, useConnect, useDisconnect, useWriteContract, useReadContract, useChainId } from "wagmi";
+import { useAccount, useConnect, useDisconnect, useWriteContract, useChainId } from "wagmi";
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from "../contracts/config";
 import Image from "next/image";
 import html2canvas from 'html2canvas';
@@ -42,6 +42,7 @@ export default function Home() {
   const [descLoading, setDescLoading] = useState(false);
   const [descError, setDescError] = useState<string | null>(null);
   const [pendingMint, setPendingMint] = useState(false);
+  const [tokenCounter, setTokenCounter] = useState<number | undefined>(undefined);
 
   // Check if user is on Sepolia
   const isOnSepolia = chainId === 11155111;
@@ -139,14 +140,35 @@ export default function Home() {
     }
   }, []);
 
-  // Read total token count
-  const { data: tokenCounter } = useReadContract({
-    address: CONTRACT_ADDRESS,
-    abi: CONTRACT_ABI,
-    functionName: 'tokenCounter',
-  });
-
-  console.log('Token counter:', tokenCounter);
+  // Fetch tokenCounter from API route on mount
+  useEffect(() => {
+    const fetchTokenCounter = async () => {
+      try {
+        const response = await fetch('/api/contract-read', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            address: CONTRACT_ADDRESS,
+            abi: CONTRACT_ABI,
+            functionName: 'tokenCounter',
+            args: [],
+          }),
+        });
+        const data = await response.json();
+        if (response.ok && data.data) {
+          setTokenCounter(Number(data.data));
+          console.log('Token counter (API):', Number(data.data));
+        } else {
+          setTokenCounter(undefined);
+          setError(data.error || 'Failed to fetch token counter');
+        }
+      } catch (err) {
+        setTokenCounter(undefined);
+        setError('Failed to fetch token counter');
+      }
+    };
+    fetchTokenCounter();
+  }, []);
 
   // Fetch individual NFT data
   const fetchNFT = useCallback(async (tokenId: number): Promise<NFT | null> => {
