@@ -646,17 +646,8 @@ export default function Home() {
                   </div>
                 </div>
                 
-                {/* Download Card as PNG Link */}
-                <div className="w-full flex justify-center mt-2 mb-8">
-                  <a
-                    href="#"
-                    onClick={e => { e.preventDefault(); handleDownloadCard(); }}
-                    className="text-base font-medium hover:underline"
-                    style={{ color: '#2BFAE9' }}
-                  >
-                    Download Card as PNG
-                  </a>
-                </div>
+
+          
                 
                 {/* Mint Profile as NFT Button */}
                 <button
@@ -669,7 +660,8 @@ export default function Home() {
                       : nftMinted
                       ? 'linear-gradient(135deg, #1DA1F2 0%, #0D8BD9 100%)'
                       : 'linear-gradient(135deg, #D4FF28 0%, #2BFAE9 100%)',
-                    color: '#1A1400'
+                    color: '#1A1400',
+                    cursor: 'pointer'
                   }}
                 >
                   {isPending ? "Minting..." : nftMinted ? "Share on X" : !isConnected ? "Connect Wallet to Mint" : "Mint Guild Card as NFT"}
@@ -683,7 +675,7 @@ export default function Home() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="underline hover:no-underline"
-                      style={{ color: '#D4FF28' }}
+                      style={{ color: '#D4FF28', cursor: 'pointer' }}
                     >
                       {txHash}
                     </a>
@@ -694,14 +686,29 @@ export default function Home() {
                     {error}
                   </div>
                 )}
+                {/* Download Card as PNG Link */}
                 
                 <button
-                  onClick={handleTwitterDisconnect}
+                  onClick={e => { e.preventDefault(); handleDownloadCard(); }}
                   className="w-full mt-4 py-2 rounded-xl font-medium transition-all duration-300 hover:scale-105"
-                  style={{ border: '2px solid #FF1A1A', color: '#F2EEE1' }}
+                  style={{ 
+                    background: 'linear-gradient(135deg, #FF2DF4 0%, #2BFAE9 100%)',
+                    color: '#fff',
+                    cursor: 'pointer'
+                  }}
+                  
                 >
-                  Connect a Different Account
+                  Download Guild Card PNG
                 </button>
+
+                <div
+                  onClick={handleTwitterDisconnect}
+                  className="text-base font-medium hover:underline flex justify-center items-center mt-2"
+                  style={{ color: '#666666', cursor: 'pointer' }}
+                >
+                  Disconnect X Account
+                </div>
+                
               </div>
             )
           ) : (
