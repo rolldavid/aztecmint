@@ -249,14 +249,6 @@ export default function Home() {
     }
   }, [tokenCounter, fetchAllNFTs]);
 
-  // Split NFTs into owned and others
-  const ownedNFTs = useMemo(() => {
-    if (!address) return [];
-    const owned = nfts.filter(nft => nft.owner.toLowerCase() === address.toLowerCase());
-    console.log('Owned NFTs:', owned);
-    return owned;
-  }, [nfts, address]);
-
   console.log('Current NFTs state:', nfts);
   console.log('Current address:', address);
 
