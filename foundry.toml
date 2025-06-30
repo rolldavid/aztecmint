@@ -20,7 +20,8 @@ broadcast = "broadcast"
 
 # See more config options https://book.getfoundry.sh/reference/config
 [rpc_endpoints]
-sepolia = "${SEPOLIA_RPC_URL}"
+sepolia = "${NEXT_PUBLIC_SEPOLIA_RPC_URL}"
+mainnet = "https://mainnet.infura.io/v3/${NEXT_PUBLIC_INFURA_PROJECT_ID}"
 
 [etherscan]
 sepolia = { key = "${ETHERSCAN_API_KEY}" }

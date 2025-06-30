@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useAccount, useConnect, useDisconnect, useWriteContract, useReadContract } from "wagmi";
+import { useAccount, useConnect, useDisconnect, useWriteContract, useReadContract, useChainId } from "wagmi";
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from "../contracts/config";
 import Image from "next/image";
 import html2canvas from 'html2canvas';
@@ -28,6 +28,7 @@ export default function Home() {
   const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
   const { writeContract, isPending, data: txHash } = useWriteContract();
+  const chainId = useChainId();
 
   const [error, setError] = useState<string | null>(null);
   const [nfts, setNfts] = useState<NFT[]>([]);
@@ -41,6 +42,9 @@ export default function Home() {
   const [descLoading, setDescLoading] = useState(false);
   const [descError, setDescError] = useState<string | null>(null);
   const [pendingMint, setPendingMint] = useState(false);
+
+  // Check if user is on Sepolia
+  const isOnSepolia = chainId === 11155111;
 
   // Check for Twitter callback on page load
   useEffect(() => {
@@ -283,6 +287,12 @@ export default function Home() {
         setError('Failed to connect wallet. Please connect manually and try again.');
         setPendingMint(false);
       }
+      return;
+    }
+
+    // Check if user is on Sepolia
+    if (!isOnSepolia) {
+      setError('Please switch your wallet network to Sepolia to mint.');
       return;
     }
 
