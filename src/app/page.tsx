@@ -720,7 +720,7 @@ export default function Home() {
               <p className="mt-4 text-lg" style={{ color: '#F2EEE1' }}>Loading NFTs...</p>
             </div>
           ) : nfts.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {nfts.map((nft) => (
                 <div key={nft.tokenId} className="group relative overflow-hidden rounded-2xl shadow-xl transition-all duration-500 hover:scale-105 hover:shadow-2xl"
                      style={{ backgroundColor: '#001F18', aspectRatio: '497/328', width: '100%', maxWidth: 497, margin: '0 auto' }}>
