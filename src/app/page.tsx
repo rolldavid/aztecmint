@@ -521,268 +521,206 @@ export default function Home() {
   const guildName = guildIdx !== null ? guilds[guildIdx].name : '';
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A1400', backgroundImage: 'url(/background.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
-      {/* Background gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-[#001F18]/20 pointer-events-none"></div>
-      
-      <div className="relative z-10 p-8 pb-20 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-        {/* Top bar: Logo/Connect/Disconnect */}
-        <div className="flex justify-between items-center mb-12">
-          <div className="flex items-center justify-center p-4 shadow relative" style={{ minWidth: 160, minHeight: 100, borderRadius: 0 }}>
-            <div className="absolute inset-0 z-0" style={{
-              background: 'radial-gradient(circle, #FF2DF4 0%, transparent 80%)',
-              filter: 'blur(40px)',
-              opacity: 0.9,
-              borderRadius: 0
-            }} />
-            <Image
-              src="/azlogo.png"
-              alt="Aztec Logo"
-              width={120}
-              height={80}
-              className="object-contain relative z-10 drop-shadow-[0_4px_32px_rgba(255,45,244,0.5)]"
-            />
-          </div>
-          {isConnected ? (
-            <div className="flex items-center gap-4">
-              <span className="text-sm px-3 py-1" style={{ backgroundColor: '#D4FF28', color: '#1A1400', borderRadius: 0 }}>
-                {address?.slice(0, 6)}...{address?.slice(-4)}
-              </span>
-              <button
-                onClick={() => disconnect()}
-                className="px-6 py-2 font-medium transition-all duration-300 hover:scale-105"
-                style={{ backgroundColor: '#2e0700', color: '#F2EEE1', borderRadius: 0 }}
-              >
-                Disconnect
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => connect({ connector: connectors[0] })}
-              className="px-8 py-3 font-medium transition-all duration-300 hover:scale-105 shadow-lg"
-              style={{ 
-                background: 'linear-gradient(135deg, #D4FF28 0%, #2BFAE9 100%)',
-                color: '#1A1400',
+    <div className="min-h-screen" style={{ backgroundColor: '#1A1400' }}>
+      {/* Top section with background image */}
+      <div style={{ position: 'relative', backgroundImage: 'url(/background.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-[#001F18]/20 pointer-events-none" />
+        <div className="relative z-10 p-8 pb-20 sm:p-20 font-[family-name:var(--font-geist-sans)]">
+          {/* Top bar: Logo/Connect/Disconnect */}
+          <div className="flex justify-between items-center mb-12">
+            <div className="flex items-center justify-center p-4 shadow relative" style={{ minWidth: 160, minHeight: 100, borderRadius: 0 }}>
+              <div className="absolute inset-0 z-0" style={{
+                background: 'radial-gradient(circle, #FF2DF4 0%, transparent 80%)',
+                filter: 'blur(40px)',
+                opacity: 0.9,
                 borderRadius: 0
-              }}
-            >
-              Connect Wallet
-            </button>
-          )}
-        </div>
-
-        {/* Create Card Section */}
-        <div className="mb-16 max-w-2xl mx-auto">
-          {twitterUser ? (
-            descLoading && !descError ? (
-              <div className="flex items-center justify-center min-h-[328px]">
-                <div className="flex items-center justify-center">
-                  <svg className="animate-spin h-8 w-8 text-[#2E0026] opacity-70 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-                  </svg>
-                  
-                </div>
+              }} />
+              <Image
+                src="/azlogo.png"
+                alt="Aztec Logo"
+                width={120}
+                height={80}
+                className="object-contain relative z-10 drop-shadow-[0_4px_32px_rgba(255,45,244,0.5)]"
+              />
+            </div>
+            {isConnected ? (
+              <div className="flex items-center gap-4">
+                <span className="text-sm px-3 py-1" style={{ backgroundColor: '#D4FF28', color: '#1A1400', borderRadius: 0 }}>
+                  {address?.slice(0, 6)}...{address?.slice(-4)}
+                </span>
+                <button
+                  onClick={() => disconnect()}
+                  className="px-6 py-2 font-medium transition-all duration-300 hover:scale-105"
+                  style={{ backgroundColor: '#2e0700', color: '#F2EEE1', borderRadius: 0 }}
+                >
+                  Disconnect
+                </button>
               </div>
             ) : (
-              <div className="p-8 border-2" 
-                   style={{ 
-                     backgroundColor: '#001F18',
-                     borderColor: '#D4FF28',
-                     boxShadow: '0 10px 30px rgba(212, 255, 40, 0.2)',
-                     borderRadius: 0
-                   }}>
-                {/* Leonardo-Style Horizontal Guild Card */}
-                <div
-                  ref={cardExportRef}
-                  className="guild-card flex flex-row items-center relative w-[497px] h-[328px] bg-[#f2eee1] border-2 border-[#D4FF28] shadow-lg p-8 mx-auto my-12 transition-transform ease-out will-change-transform [perspective:800px] overflow-hidden"
-                  style={{
-                    backgroundImage: cardBg ? `url(${cardBg}), linear-gradient(#f2eee1, #e6e0c7)` : `linear-gradient(#f2eee1, #e6e0c7)`,
-                    backgroundSize: 'cover',
-                    fontFamily: 'Crimson Pro, serif',
-                    color: '#D4FF28',
-                    transform: `rotateX(var(--x-rotation, 0deg)) rotateY(var(--y-rotation, 0deg)) scale(var(--card-scale, 1))`,
-                    transformStyle: 'preserve-3d',
-                    perspective: '800px',
-                    borderRadius: 0,
-                  }}
-                  onMouseLeave={ev => {
-                    cardBoundingRef.current = null;
-                    ev.currentTarget.style.setProperty('--x-rotation', '0deg');
-                    ev.currentTarget.style.setProperty('--y-rotation', '0deg');
-                    ev.currentTarget.style.setProperty('--card-scale', '1');
-                  }}
-                  onMouseEnter={ev => {
-                    cardBoundingRef.current = ev.currentTarget.getBoundingClientRect();
-                  }}
-                  onMouseMove={ev => {
-                    if (!cardBoundingRef.current) return;
-                    const x = ev.clientX - cardBoundingRef.current.left;
-                    const y = ev.clientY - cardBoundingRef.current.top;
-                    const xPercentage = x / cardBoundingRef.current.width;
-                    const yPercentage = y / cardBoundingRef.current.height;
-                    const xRotation = (xPercentage - 0.5) * 20;
-                    const yRotation = (0.5 - yPercentage) * 20;
-                    ev.currentTarget.style.setProperty("--x-rotation", `${yRotation}deg`);
-                    ev.currentTarget.style.setProperty("--y-rotation", `${xRotation}deg`);
-                    ev.currentTarget.style.setProperty('--card-scale', '1.1');
-                  }}
-                >
-                  {/* Dashed border inside */}
-                  <div className="pointer-events-none absolute top-2 left-2 right-2 bottom-2 border-2 border-dashed border-[#D4FF28] z-0" style={{ borderRadius: 0 }} />
-                  {/* Radial glare effect */}
-                  <div className="pointer-events-none absolute inset-0 group-hover:bg-[radial-gradient(at_var(--x)_var(--y),rgba(255,255,255,0.3)_20%,transparent_80%)] z-10" />
-                  {/* Profile Image (use proxy for PNG export) */}
-                  <div className="profile-container flex-shrink-0 w-[120px] h-[120px] border-4 border-[#D4FF28] overflow-hidden mr-6 z-10" style={{filter: 'grayscale(100%) contrast(1.2) brightness(0.8)', borderRadius: 0}}>
-                    {twitterUser?.profileImage ? (
-                      <img
-                        src={`/api/proxy-image?url=${encodeURIComponent(twitterUser.profileImage)}`}
-                        alt={twitterUser.username}
-                        width={120}
-                        height={120}
-                        style={{ objectFit: 'cover', width: '100%', height: '100%' }}
-                      />
-                    ) : (
-                      <span className="text-[#001F18] font-bold">No Image</span>
-                    )}
-                  </div>
-                  {/* Content */}
-                  <div className="content flex-1 z-10">
-                    <h1 
-                      className="guild-title text-2xl font-bold mb-2 inline-block"
-                      style={{
-                        fontFamily: 'Crimson Pro, serif',
-                        color: '#D4FF28',
-                        background: '#00122e',
-                        padding: '0.25em 0.75em',
-                        borderRadius: 0,
-                        boxShadow: '0 2px 8px rgba(0,18,46,0.15)'
-                      }}
-                    >
-                      {guildName}
-                    </h1>
-                    <p className="twitter-handle text-base mb-4 opacity-90" style={{fontFamily: 'Crimson Pro, serif'}}>
-                      @{twitterUser.username}
-                    </p>
-                    {descError ? (
-                      <p className="text-[#FF1A1A] text-base italic">{descError}</p>
-                    ) : (
-                      <span
-                        className="inline-block text-base px-3 py-2"
-                        style={{
-                          fontFamily: 'EB Garamond, serif',
-                          background: '#2E0026',
-                          color: '#FF2DF4',
-                          lineHeight: 1.5,
-                          boxShadow: '0 2px 8px rgba(46,0,38,0.10)',
-                          borderRadius: 0
-                        }}
-                      >
-                        {polymathDescription || "Welcome to the Aztec Community! Thank you for being part of our guild."}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                
-
-          
-                
-                {/* Mint Profile as NFT Button */}
-                <button
-                  onClick={nftMinted ? handleShareOnX : handleMint}
-                  disabled={isPending}
-                  className="w-full py-4 font-bold text-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
-                  style={{ 
-                    background: isPending 
-                      ? 'linear-gradient(135deg, #FF1A1A 0%, #FF2DF4 100%)'
-                      : nftMinted
-                      ? 'linear-gradient(135deg, #1DA1F2 0%, #0D8BD9 100%)'
-                      : 'linear-gradient(135deg, #D4FF28 0%, #2BFAE9 100%)',
-                    color: '#1A1400',
-                    cursor: 'pointer',
-                    borderRadius: 0
-                  }}
-                >
-                  {isPending ? "Minting..." : nftMinted ? "Share on X" : !isConnected ? "Connect Wallet to Mint" : "Mint Guild Card as NFT"}
-                </button>
-                
-                {txHash && (
-                  <div className="text-sm p-3 mt-4" style={{ backgroundColor: '#00122E', color: '#2BFAE9', borderRadius: 0 }}>
-                    Transaction: {" "}
-                    <a
-                      href={`https://sepolia.etherscan.io/tx/${txHash}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline hover:no-underline"
-                      style={{ color: '#D4FF28', cursor: 'pointer' }}
-                    >
-                      {txHash}
-                    </a>
-                  </div>
-                )}
-                {error && (
-                  <div className="text-sm p-3 mt-4" style={{ backgroundColor: '#FF1A1A', color: '#F2EEE1', borderRadius: 0 }}>
-                    {error}
-                  </div>
-                )}
-                {/* Download Card as PNG Link */}
-                
-                <button
-                  onClick={e => { e.preventDefault(); handleDownloadCard(); }}
-                  className="w-full mt-4 py-2 font-medium transition-all duration-300 hover:scale-105"
-                  style={{ 
-                    background: 'linear-gradient(135deg, #FF2DF4 0%, #2BFAE9 100%)',
-                    color: '#fff',
-                    cursor: 'pointer',
-                    borderRadius: 0
-                  }}
-                >
-                  Download Card PNG
-                </button>
-
-                <div
-                  onClick={handleTwitterDisconnect}
-                  className="text-base font-medium hover:underline flex justify-center items-center mt-2"
-                  style={{ color: '#666666', cursor: 'pointer' }}
-                >
-                  Disconnect X Account
-                </div>
-                
-              </div>
-            )
-          ) : (
-            <div className="p-8 border-2" 
-                 style={{ 
-                   backgroundColor: '#001F18',
-                   borderColor: '#FF2DF4',
-                   boxShadow: '0 10px 30px rgba(255, 45, 244, 0.2)',
-                   borderRadius: 0
-                 }}>
-              <h2 className="text-2xl font-bold mb-6 text-center" style={{ color: '#F2EEE1' }}>
-                Join the Aztec Guild
-              </h2>
-              <p className="text-center mb-6" style={{ color: '#2BFAE9' }}>
-                Connect your X to create a personalized guild member card
-              </p>
               <button
-                onClick={handleTwitterLogin}
-                disabled={twitterLoading}
-                className="w-full py-4 font-bold text-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+                onClick={() => connect({ connector: connectors[0] })}
+                className="px-8 py-3 font-medium transition-all duration-300 hover:scale-105 shadow-lg"
                 style={{ 
-                  background: twitterLoading 
-                    ? 'linear-gradient(135deg, #FF1A1A 0%, #FF2DF4 100%)'
-                    : 'linear-gradient(135deg, #D4FF28 0%, #2BFAE9 100%)',
+                  background: 'linear-gradient(135deg, #D4FF28 0%, #2BFAE9 100%)',
                   color: '#1A1400',
                   borderRadius: 0
                 }}
               >
-                {twitterLoading ? "Connecting..." : "Generate Member Card"}
+                Connect Wallet
               </button>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
 
-        {/* All NFTs Section */}
+          {/* Create Card Section */}
+          <div className="mb-16 max-w-2xl mx-auto">
+            {twitterUser ? (
+              descLoading && !descError ? (
+                <div className="flex items-center justify-center min-h-[328px]">
+                  <div className="flex items-center justify-center">
+                    <svg className="animate-spin h-8 w-8 text-[#2E0026] opacity-70 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                    </svg>
+                    
+                  </div>
+                </div>
+              ) : (
+                <div className="p-8 border-2" 
+                     style={{ 
+                       backgroundColor: '#001F18',
+                       borderColor: '#D4FF28',
+                       boxShadow: '0 10px 30px rgba(212, 255, 40, 0.2)',
+                       borderRadius: 0
+                     }}>
+                  {/* Leonardo-Style Horizontal Guild Card */}
+                  <div
+                    ref={cardExportRef}
+                    className="guild-card flex flex-row items-center relative w-[497px] h-[328px] bg-[#f2eee1] border-2 border-[#D4FF28] shadow-lg p-8 mx-auto my-12 transition-transform ease-out will-change-transform [perspective:800px] overflow-hidden"
+                    style={{
+                      backgroundImage: cardBg ? `url(${cardBg}), linear-gradient(#f2eee1, #e6e0c7)` : `linear-gradient(#f2eee1, #e6e0c7)`,
+                      backgroundSize: 'cover',
+                      fontFamily: 'Crimson Pro, serif',
+                      color: '#D4FF28',
+                      transform: `rotateX(var(--x-rotation, 0deg)) rotateY(var(--y-rotation, 0deg)) scale(var(--card-scale, 1))`,
+                      transformStyle: 'preserve-3d',
+                      perspective: '800px',
+                      borderRadius: 0,
+                    }}
+                    onMouseLeave={ev => {
+                      cardBoundingRef.current = null;
+                      ev.currentTarget.style.setProperty('--x-rotation', '0deg');
+                      ev.currentTarget.style.setProperty('--y-rotation', '0deg');
+                      ev.currentTarget.style.setProperty('--card-scale', '1');
+                    }}
+                    onMouseEnter={ev => {
+                      cardBoundingRef.current = ev.currentTarget.getBoundingClientRect();
+                    }}
+                    onMouseMove={ev => {
+                      if (!cardBoundingRef.current) return;
+                      const x = ev.clientX - cardBoundingRef.current.left;
+                      const y = ev.clientY - cardBoundingRef.current.top;
+                      const xPercentage = x / cardBoundingRef.current.width;
+                      const yPercentage = y / cardBoundingRef.current.height;
+                      const xRotation = (xPercentage - 0.5) * 20;
+                      const yRotation = (0.5 - yPercentage) * 20;
+                      ev.currentTarget.style.setProperty("--x-rotation", `${yRotation}deg`);
+                      ev.currentTarget.style.setProperty("--y-rotation", `${xRotation}deg`);
+                      ev.currentTarget.style.setProperty('--card-scale', '1.1');
+                    }}
+                  >
+                    {/* Dashed border inside */}
+                    <div className="pointer-events-none absolute top-2 left-2 right-2 bottom-2 border-2 border-dashed border-[#D4FF28] z-0" style={{ borderRadius: 0 }} />
+                    {/* Radial glare effect */}
+                    <div className="pointer-events-none absolute inset-0 group-hover:bg-[radial-gradient(at_var(--x)_var(--y),rgba(255,255,255,0.3)_20%,transparent_80%)] z-10" />
+                    {/* Profile Image (use proxy for PNG export) */}
+                    <div className="profile-container flex-shrink-0 w-[120px] h-[120px] border-4 border-[#D4FF28] overflow-hidden mr-6 z-10" style={{filter: 'grayscale(100%) contrast(1.2) brightness(0.8)', borderRadius: 0}}>
+                      {twitterUser?.profileImage ? (
+                        <img
+                          src={`/api/proxy-image?url=${encodeURIComponent(twitterUser.profileImage)}`}
+                          alt={twitterUser.username}
+                          width={120}
+                          height={120}
+                          style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                        />
+                      ) : (
+                        <span className="text-[#001F18] font-bold">No Image</span>
+                      )}
+                    </div>
+                    {/* Content */}
+                    <div className="content flex-1 z-10">
+                      <h1 
+                        className="guild-title text-2xl font-bold mb-2 inline-block"
+                        style={{
+                          fontFamily: 'Crimson Pro, serif',
+                          color: '#D4FF28',
+                          background: '#00122e',
+                          padding: '0.25em 0.75em',
+                          borderRadius: 0,
+                          boxShadow: '0 2px 8px rgba(0,18,46,0.15)'
+                        }}
+                      >
+                        {guildName}
+                      </h1>
+                      <p className="twitter-handle text-base mb-4 opacity-90" style={{fontFamily: 'Crimson Pro, serif'}}>
+                        @{twitterUser.username}
+                      </p>
+                      {descError ? (
+                        <p className="text-[#FF1A1A] text-base italic">{descError}</p>
+                      ) : (
+                        <span
+                          className="inline-block text-base px-3 py-2"
+                          style={{
+                            fontFamily: 'EB Garamond, serif',
+                            background: '#2E0026',
+                            color: '#FF2DF4',
+                            lineHeight: 1.5,
+                            boxShadow: '0 2px 8px rgba(46,0,38,0.10)',
+                            borderRadius: 0
+                          }}
+                        >
+                          {polymathDescription || "Welcome to the Aztec Community! Thank you for being part of our guild."}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  
+                </div>
+              )
+            ) : (
+              <div className="p-8 border-2" 
+                   style={{ 
+                     backgroundColor: '#001F18',
+                     borderColor: '#FF2DF4',
+                     boxShadow: '0 10px 30px rgba(255, 45, 244, 0.2)',
+                     borderRadius: 0
+                   }}>
+                <h2 className="text-2xl font-bold mb-6 text-center" style={{ color: '#F2EEE1' }}>
+                  Join the Aztec Guild
+                </h2>
+                <p className="text-center mb-6" style={{ color: '#2BFAE9' }}>
+                  Connect your X to create a personalized guild member card
+                </p>
+                <button
+                  onClick={handleTwitterLogin}
+                  disabled={twitterLoading}
+                  className="w-full py-4 font-bold text-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+                  style={{ 
+                    background: twitterLoading 
+                      ? 'linear-gradient(135deg, #FF1A1A 0%, #FF2DF4 100%)'
+                      : 'linear-gradient(135deg, #D4FF28 0%, #2BFAE9 100%)',
+                    color: '#1A1400',
+                    borderRadius: 0
+                  }}
+                >
+                  {twitterLoading ? "Connecting..." : "Generate Member Card"}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      {/* All NFTs Section (no background image) */}
+      <div className="relative z-10 p-8 pb-20 sm:p-20 font-[family-name:var(--font-geist-sans)]">
         <div className="mb-8">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl font-bold" style={{ color: '#F2EEE1' }}>
