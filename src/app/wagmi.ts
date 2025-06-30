@@ -7,7 +7,7 @@ export const config = createConfig({
   connectors: [
     injected(),
     metaMask(),
-    walletConnect({ projectId: 'YOUR_WALLET_CONNECT_PROJECT_ID' }),
+    walletConnect({ projectId: '6e633dec1508096ad0327442dc883646' }),
   ],
   transports: {
     [mainnet.id]: http(),
